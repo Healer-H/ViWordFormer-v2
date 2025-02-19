@@ -1,7 +1,7 @@
 import torch
 
 from typing import List
-from .utils import preprocess_sentence
+from .utils.utils import preprocess_sentence
 
 class Vocab(object):
     """

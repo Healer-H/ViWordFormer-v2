@@ -3,3 +3,6 @@ example*
 *.json
 data
 checkpoints
+a_temp
+.old
+scripts
