@@ -53,7 +53,7 @@ class VipherTokenizerV2:
         Define special tokens and their corresponding tuple-index forms
         (onset_idx, tone_idx, medial_idx, nucleus_idx, coda_idx).
         """
-        self.pad_token = config.unk_piece
+        self.pad_token = config.pad_piece
         self.bos_token = config.bos_piece
         self.eos_token = config.eos_piece
         self.unk_token = config.unk_piece
