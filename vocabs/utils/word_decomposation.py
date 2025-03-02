@@ -245,9 +245,9 @@ def split_non_vietnamese_word(word):
     onset = ""
     if decomposed_character in ONSET_SET:
             onset = decomposed_character
-            return onset, "", ""
+            return onset, "", "", "", ""
     else:
-            return "", "", decomposed_character
+            return "", "", "", "", decomposed_character
     
 def compose_word(onset: str, medial: str, nucleus: str, coda: str, tone: str) -> str:
     tone_map = {
