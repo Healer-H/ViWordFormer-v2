@@ -101,9 +101,9 @@ class VipherTokenizerV2:
         self.space_idx = (
             config.space_id,
             config.space_id,
-            config.unk_id,
-            config.unk_id,
-            config.unk_id,
+            config.space_id,
+            config.space_id,
+            config.space_id,
         )
 
     def _make_vocab(self, config):
