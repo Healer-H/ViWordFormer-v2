@@ -1,5 +1,9 @@
-from utils.utils import preprocess_sentence
-from utils.word_decomposation import is_Vietnamese, split_non_vietnamese_word
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from vocabs.utils.utils import preprocess_sentence
+from vocabs.utils.word_decomposation import is_Vietnamese, split_non_vietnamese_word
 import json
 
 with open(
