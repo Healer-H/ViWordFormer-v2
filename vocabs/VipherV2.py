@@ -214,11 +214,18 @@ class VipherTokenizerV2:
 
         # Build itos/stoi for onset, tone, rhyme
         # Prepend the specials at the start
-        self.itos_onset = {i: tok for i, tok in enumerate(self.specials + sorted_onset)}
-        self.stoi_onset = {tok: i for i, tok in enumerate(self.specials + sorted_onset)}
-
-        self.itos_tone = {i: tok for i, tok in enumerate(self.specials + sorted_tone)}
-        self.stoi_tone = {tok: i for i, tok in enumerate(self.specials + sorted_tone)}
+        self.itos_onset = {
+            i: tok for i, tok in enumerate(self.specials + sorted_onset)
+        }
+        self.stoi_onset = {
+            tok: i for i, tok in enumerate(self.specials + sorted_onset)
+        }
+        self.itos_tone = {
+            i: tok for i, tok in enumerate(self.specials + sorted_tone)
+        }
+        self.stoi_tone = {
+            tok: i for i, tok in enumerate(self.specials + sorted_tone)
+        }
         self.itos_medial = {
             i: tok for i, tok in enumerate(self.specials + sorted_medial)
         }
@@ -231,8 +238,12 @@ class VipherTokenizerV2:
         self.stoi_nucleus = {
             tok: i for i, tok in enumerate(self.specials + sorted_nucleus)
         }
-        self.itos_coda = {i: tok for i, tok in enumerate(self.specials + sorted_coda)}
-        self.stoi_coda = {tok: i for i, tok in enumerate(self.specials + sorted_coda)}
+        self.itos_coda = {
+            i: tok for i, tok in enumerate(self.specials + sorted_coda)
+        }
+        self.stoi_coda = {
+            tok: i for i, tok in enumerate(self.specials + sorted_coda)
+        }
         # self.itos_rhyme = {
         #     i: tok for i, tok in enumerate(self.specials + sorted_rhyme)
         # }
