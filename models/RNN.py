@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from vocabs.vocab import Vocab
+from .utils import ViWordEmbedder
 from builders.model_builder import META_ARCHITECTURE
 
 @META_ARCHITECTURE.register()
@@ -23,11 +24,7 @@ class RNNmodel(nn.Module):
 
         # Embedding layer
         self.pad_idx = vocab.get_pad_idx
-        self.embedding = nn.Embedding(
-            num_embeddings=vocab.total_tokens, 
-            embedding_dim=self.input_dim, 
-            padding_idx=self.pad_idx
-        )
+        self.embedding = ViWordEmbedder(config, vocab)
 
         # RNN layer
         if self.model_type == 'GRU':

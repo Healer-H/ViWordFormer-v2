@@ -12,3 +12,4 @@ from .BPE import BPETokenizer
 from .Unigram import UnigramTokenizer
 from .ViPher import VipherTokenizer
 from .WordPiece import WordPieceTokenizer
+from .VipherV2 import VipherTokenizerV2

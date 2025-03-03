@@ -41,14 +41,15 @@ class PositionalEncoding(nn.Module):
 
 class ViWordEmbedder(nn.Module):
     def __init__(self, config, vocab: Vocab):
-        self.embed_dim = vocab.embedder.embed_dim
+        super().__init__()
+        self.embed_dim = config.embedder.embed_dim
         self.model_type = config.model_type
         self.bidirectional = config.embedder.bidirectional
         self.dropout_prob = config.embedder.dropout
         self.num_layer = config.embedder.num_layer
         self.device = config.device
         self.pad_idx = vocab.get_pad_idx
-        self.total_token_dict = vocab.total_token_dict
+        self.total_token_dict = vocab.total_tokens_dict
 
         self.embedding_onset = nn.Embedding(
             num_embeddings=self.total_token_dict["onset"],
@@ -56,31 +57,31 @@ class ViWordEmbedder(nn.Module):
             padding_idx=self.pad_idx,
         )
         self.embedding_tone = nn.Embedding(
-            num_embeddings=vocab.total_token_dict["tone"],
+            num_embeddings=vocab.total_tokens_dict["tone"],
             embedding_dim=self.embed_dim,
             padding_idx=self.pad_idx,
         )
 
         self.embedding_nucleus = nn.Embedding(
-            num_embeddings=vocab.total_token_dict["nucleus"],
+            num_embeddings=vocab.total_tokens_dict["nucleus"],
             embedding_dim=self.embed_dim,
             padding_idx=self.pad_idx,
         )
         self.embedding_medial = nn.Embedding(
-            num_embeddings=vocab.total_token_dict["medial"],
+            num_embeddings=vocab.total_tokens_dict["medial"],
             embedding_dim=self.embed_dim,
             padding_idx=self.pad_idx,
         )
         self.embedding_coda = nn.Embedding(
-            num_embeddings=vocab.total_token_dict["coda"],
+            num_embeddings=vocab.total_tokens_dict["coda"],
             embedding_dim=self.embed_dim,
             padding_idx=self.pad_idx,
         )
 
         if self.model_type == "GRU":
             self.rnn = nn.GRU(
-                input_size=self.input_dim,
-                hidden_size=self.d_model,
+                input_size=self.embed_dim,
+                hidden_size=self.embed_dim,
                 num_layers=self.num_layer,
                 bidirectional=True if self.bidirectional == 2 else False,
                 batch_first=True,
@@ -88,8 +89,8 @@ class ViWordEmbedder(nn.Module):
             )
         elif self.model_type == "LSTM":
             self.rnn = nn.LSTM(
-                input_size=self.input_dim,
-                hidden_size=self.d_model,
+                input_size=self.embed_dim,
+                hidden_size=self.embed_dim,
                 num_layers=self.num_layer,
                 bidirectional=True if self.bidirectional == 2 else False,
                 batch_first=True,
