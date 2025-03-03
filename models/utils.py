@@ -109,8 +109,8 @@ class ViWordEmbedder(nn.Module):
 
         onset_embed = self.embedding_onset(onset)  # (bs, seq_len, d_model)
         medial_embed = self.embedding_medial(medial)
-        nuclues_embed = self.embedding_onset(nucleus)
-        coda_embed = self.embedding_onset(coda)
+        nuclues_embed = self.embedding_nucleus(nucleus)
+        coda_embed = self.embedding_coda(coda)
         tone_embed = self.embedding_tone(tone)
         # stack_embed.shape = (bs, seq_len, 5, d_model)
         stack_embed = torch.stack(
