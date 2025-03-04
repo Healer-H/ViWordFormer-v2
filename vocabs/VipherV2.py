@@ -455,7 +455,7 @@ class VipherTokenizerV2:
             str: The reconstructed sentence.
         """
         # If there's a batch dimension, pick the first item
-        if encoded_sentence.ndim == 5:
+        if encoded_sentence.ndim == 3:
             encoded_sentence = encoded_sentence[0]
 
         # Map from combining Unicode tone marks to bracket notation
@@ -471,6 +471,9 @@ class VipherTokenizerV2:
         current_word = []
         i = 0
         while i < len(encoded_sentence):
+            token_values = encoded_sentence[i].tolist()
+            if len(token_values) != 5:
+                print(f"Lỗi tại token {i}: {token_values}")
             onset_idx, tone_idx, medial_idx, nucleus_idx, coda_idx = encoded_sentence[
                 i
             ].tolist()
