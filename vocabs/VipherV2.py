@@ -532,12 +532,14 @@ class VipherTokenizerV2:
                         self.space_token,
                         self.space_token,
                         self.space_token,
+                        self.space_token,
+                        self.space_token,
                     ):
                         # End of non-VN word
                         i += 1
                         break
                     # We treat the onset or rhyme(me_str + nu_str + co_str) as a single char for non-VN text
-                    char_to_add = on_str if on_str else (me_str + nu_str + co_str)
+                    char_to_add = on_str if on_str else "".join([me_str, nu_str, co_str])
                     current_word.append(char_to_add)
                     i += 1
 

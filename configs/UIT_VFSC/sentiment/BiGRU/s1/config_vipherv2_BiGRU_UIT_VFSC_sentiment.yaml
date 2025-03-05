@@ -31,7 +31,7 @@ task: TextClassification
 training:
   checkpoint_path: checkpoints/UIT_VFSC/sentiment/s1/BiGRU/vipher
   learning_rate: 0.1
-  patience: 20
+  patience: 1
   score: f1
   seed: 42
   warmup: 500
