@@ -36,7 +36,7 @@ class BaseTask:
         self.create_dataloaders(config)
 
         self.logger.info("Building model")
-        self.model = build_model(config.model, self.vocab)
+        self.model = build_model(config, self.vocab)
         self.config = config
         self.device = torch.device(config.model.device)
 

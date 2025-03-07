@@ -43,16 +43,16 @@ class ViWordEmbedder(nn.Module):
     def __init__(self, config, vocab: Vocab):
         super().__init__()
         self.embed_dim = config.embedder.embed_dim
-        self.model_type = config.model_type
+        self.model_type = config.embedder.model_type
         self.bidirectional = config.embedder.bidirectional
         self.dropout_prob = config.embedder.dropout
         self.num_layer = config.embedder.num_layer
-        self.device = config.device
+        self.device = config.model.device
         self.pad_idx = vocab.get_pad_idx
-        self.total_token_dict = vocab.total_tokens_dict
+        self.total_tokens_dict = vocab.total_tokens_dict
 
         self.embedding_onset = nn.Embedding(
-            num_embeddings=self.total_token_dict["onset"],
+            num_embeddings=self.total_tokens_dict["onset"],
             embedding_dim=self.embed_dim,
             padding_idx=self.pad_idx,
         )

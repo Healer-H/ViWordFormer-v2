@@ -471,9 +471,6 @@ class VipherTokenizerV2:
         current_word = []
         i = 0
         while i < len(encoded_sentence):
-            token_values = encoded_sentence[i].tolist()
-            if len(token_values) != 5:
-                print(f"Lỗi tại token {i}: {token_values}")
             onset_idx, tone_idx, medial_idx, nucleus_idx, coda_idx = encoded_sentence[
                 i
             ].tolist()

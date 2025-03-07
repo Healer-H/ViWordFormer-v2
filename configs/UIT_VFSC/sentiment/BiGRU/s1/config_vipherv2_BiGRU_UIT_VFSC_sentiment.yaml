@@ -22,11 +22,12 @@ model:
   name: BiGRU_Model3layer_UIT_VFSC_vipher_sentiment
   num_layer: 3
   num_output: 3
-  embedder:
-    bidirectional: 2
-    dropout: 0.3
-    num_layer: 3
-    embed_dim: 256
+embedder:
+  bidirectional: 2
+  dropout: 0.3
+  model_type: GRU
+  num_layer: 3
+  embed_dim: 256
 task: TextClassification
 training:
   checkpoint_path: checkpoints/UIT_VFSC/sentiment/s1/BiGRU/vipher

@@ -12,15 +12,15 @@ class RNNmodel(nn.Module):
     def __init__(self, config, vocab: Vocab):
         super(RNNmodel, self).__init__()
         # Model configuration
-        self.device = config.device
-        self.input_dim = config.input_dim
-        self.d_model = config.d_model
-        self.num_layer = config.num_layer
-        self.dropout_prob = config.dropout
-        self.num_output = config.num_output
-        self.bidirectional = config.bidirectional
-        self.model_type = config.model_type
-        self.label_smoothing = config.label_smoothing
+        self.device = config.model.device
+        self.input_dim = config.model.input_dim
+        self.d_model = config.model.d_model
+        self.num_layer = config.model.num_layer
+        self.dropout_prob = config.model.dropout
+        self.num_output = config.model.num_output
+        self.bidirectional = config.model.bidirectional
+        self.model_type = config.model.model_type
+        self.label_smoothing = config.model.label_smoothing
 
         # Embedding layer
         self.pad_idx = vocab.get_pad_idx
