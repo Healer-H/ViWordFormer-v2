@@ -7,6 +7,7 @@ from .utils import ViWordEmbedder
 
 @META_ARCHITECTURE.register()
 class TransformerEncoder_ViPherV2(nn.Module):
+    # TODO: Can we inheritance from TransformerEncoder_Vipher?
     def __init__(self, config, vocab: Vocab):
         super().__init__()
         # Model configuration

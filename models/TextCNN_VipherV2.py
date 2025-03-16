@@ -8,6 +8,7 @@ from .utils import ViWordEmbedder
 
 @META_ARCHITECTURE.register()
 class TextCNN_VipherV2(nn.Module):
+    # TODO: can we inheritance from TextCNN_Vipher?
     def __init__(self, config, vocab: Vocab):
         super().__init__()
         # Model configuration
