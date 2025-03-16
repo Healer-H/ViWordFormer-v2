@@ -17,6 +17,15 @@ def generate_padding_mask(seq, pad_token_id=0):
     return seq == pad_token_id
 
 
+def new_generate_padding_mask(seq, pad_token_id=0):
+    if seq.ndim == 3 and seq.shape[-1] == 5:
+        """(batch_size, seq_len, 5) -> padding mask"""
+        pad_token = torch.full((1, 1, 5), pad_token_id, device=seq.device)
+        return (seq == pad_token).all(dim=-1)  # Kiểm tra xem toàn bộ 5 thành phần có phải pad không
+    
+    return seq == pad_token_id  # Cho trường hợp khác
+
+
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_seq_length=5000, dropout=0.1):
         super().__init__()

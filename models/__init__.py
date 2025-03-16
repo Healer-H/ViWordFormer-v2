@@ -25,8 +25,10 @@ from .TextCNN import TextCNN
 from .TextCNN_Vipher import TextCNN_ViPher
 from .TextCNN_ABSA import TextCNN_ABSA
 from .TextCNN_Vipher_ABSA import TextCNN_ABSA_ViPher
+from .TextCNN_VipherV2 import TextCNN_VipherV2
 
 from .Transformer import TransformerEncoder
 from .Transformer_Vipher import TransformerEncoder_ViPher
 from .Transformer_ABSA import TransformerEncoder_ABSA
 from .Transformer_Vipher_ABSA import TransformerEncoder_ABSA_ViPher
+from .Transformer_VipherV2 import TransformerEncoder_ViPherV2
