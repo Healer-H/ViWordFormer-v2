@@ -38,8 +38,6 @@ class VipherTokenizerV2:
         self.stoi_nucleus = {}
         self.itos_coda = {}
         self.stoi_coda = {}
-        # self.itos_rhyme = {}
-        # self.stoi_rhyme = {}
 
         # Label mappings
         self.i2l = {}
@@ -117,7 +115,7 @@ class VipherTokenizerV2:
         counter_medial = Counter()
         counter_nucleus = Counter()
         counter_coda = Counter()
-        # counter_rhyme = Counter()
+
         labels = set()
         aspects = set()
         sentiments = set()
@@ -143,7 +141,6 @@ class VipherTokenizerV2:
                         if token not in self.vietnamese:
                             self.vietnamese.append(token)
 
-                        # word_split = (onset, medial, nucleus, coda, tone)
                         onset, medial, nucleus, coda, tone = word_split
                         onset = onset if onset else ""
                         medial = medial if medial else ""
@@ -165,7 +162,6 @@ class VipherTokenizerV2:
                             counter_medial.update([nucleus])
                         if coda not in self.specials:
                             counter_coda.update([coda])
-                        # if rhyme  not in self.specials: counter_rhyme.update([rhyme])
 
                     else:
                         # Non-Vietnamese word, split into characters
@@ -244,12 +240,6 @@ class VipherTokenizerV2:
         self.stoi_coda = {
             tok: i for i, tok in enumerate(self.specials + sorted_coda)
         }
-        # self.itos_rhyme = {
-        #     i: tok for i, tok in enumerate(self.specials + sorted_rhyme)
-        # }
-        # self.stoi_rhyme = {
-        #     tok: i for i, tok in enumerate(self.specials + sorted_rhyme)
-        # }
 
         # Build label <-> index maps
         if self.config.get("task_type", None) == "aspect_based":
