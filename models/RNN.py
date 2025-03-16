@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from vocabs.vocab import Vocab
+from .utils import ViWordEmbedder
 from builders.model_builder import META_ARCHITECTURE
 
 @META_ARCHITECTURE.register()
@@ -11,23 +12,19 @@ class RNNmodel(nn.Module):
     def __init__(self, config, vocab: Vocab):
         super(RNNmodel, self).__init__()
         # Model configuration
-        self.device = config.device
-        self.input_dim = config.input_dim
-        self.d_model = config.d_model
-        self.num_layer = config.num_layer
-        self.dropout_prob = config.dropout
-        self.num_output = config.num_output
-        self.bidirectional = config.bidirectional
-        self.model_type = config.model_type
-        self.label_smoothing = config.label_smoothing
+        self.device = config.model.device
+        self.input_dim = config.model.input_dim
+        self.d_model = config.model.d_model
+        self.num_layer = config.model.num_layer
+        self.dropout_prob = config.model.dropout
+        self.num_output = config.model.num_output
+        self.bidirectional = config.model.bidirectional
+        self.model_type = config.model.model_type
+        self.label_smoothing = config.model.label_smoothing
 
         # Embedding layer
         self.pad_idx = vocab.get_pad_idx
-        self.embedding = nn.Embedding(
-            num_embeddings=vocab.total_tokens, 
-            embedding_dim=self.input_dim, 
-            padding_idx=self.pad_idx
-        )
+        self.embedding = ViWordEmbedder(config, vocab)
 
         # RNN layer
         if self.model_type == 'GRU':

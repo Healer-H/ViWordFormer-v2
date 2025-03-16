@@ -38,8 +38,6 @@ class VipherTokenizerV2:
         self.stoi_nucleus = {}
         self.itos_coda = {}
         self.stoi_coda = {}
-        # self.itos_rhyme = {}
-        # self.stoi_rhyme = {}
 
         # Label mappings
         self.i2l = {}
@@ -117,7 +115,7 @@ class VipherTokenizerV2:
         counter_medial = Counter()
         counter_nucleus = Counter()
         counter_coda = Counter()
-        # counter_rhyme = Counter()
+
         labels = set()
         aspects = set()
         sentiments = set()
@@ -143,7 +141,6 @@ class VipherTokenizerV2:
                         if token not in self.vietnamese:
                             self.vietnamese.append(token)
 
-                        # word_split = (onset, medial, nucleus, coda, tone)
                         onset, medial, nucleus, coda, tone = word_split
                         onset = onset if onset else ""
                         medial = medial if medial else ""
@@ -165,7 +162,6 @@ class VipherTokenizerV2:
                             counter_medial.update([nucleus])
                         if coda not in self.specials:
                             counter_coda.update([coda])
-                        # if rhyme  not in self.specials: counter_rhyme.update([rhyme])
 
                     else:
                         # Non-Vietnamese word, split into characters
@@ -244,12 +240,6 @@ class VipherTokenizerV2:
         self.stoi_coda = {
             tok: i for i, tok in enumerate(self.specials + sorted_coda)
         }
-        # self.itos_rhyme = {
-        #     i: tok for i, tok in enumerate(self.specials + sorted_rhyme)
-        # }
-        # self.stoi_rhyme = {
-        #     tok: i for i, tok in enumerate(self.specials + sorted_rhyme)
-        # }
 
         # Build label <-> index maps
         if self.config.get("task_type", None) == "aspect_based":
@@ -455,7 +445,7 @@ class VipherTokenizerV2:
             str: The reconstructed sentence.
         """
         # If there's a batch dimension, pick the first item
-        if encoded_sentence.ndim == 5:
+        if encoded_sentence.ndim == 3:
             encoded_sentence = encoded_sentence[0]
 
         # Map from combining Unicode tone marks to bracket notation
@@ -529,12 +519,14 @@ class VipherTokenizerV2:
                         self.space_token,
                         self.space_token,
                         self.space_token,
+                        self.space_token,
+                        self.space_token,
                     ):
                         # End of non-VN word
                         i += 1
                         break
                     # We treat the onset or rhyme(me_str + nu_str + co_str) as a single char for non-VN text
-                    char_to_add = on_str if on_str else (me_str + nu_str + co_str)
+                    char_to_add = on_str if on_str else "".join([me_str, nu_str, co_str])
                     current_word.append(char_to_add)
                     i += 1
 

@@ -17,6 +17,16 @@ def generate_padding_mask(seq, pad_token_id=0):
     return seq == pad_token_id
 
 
+def new_generate_padding_mask(seq, pad_token_id=0):
+    # TODO: update `generate_padding_mask` instead of create new ones.
+    if seq.ndim == 3 and seq.shape[-1] == 5:
+        """(batch_size, seq_len, 5) -> padding mask"""
+        pad_token = torch.full((1, 1, 5), pad_token_id, device=seq.device)
+        return (seq == pad_token).all(dim=-1)
+
+    return seq == pad_token_id
+
+
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_seq_length=5000, dropout=0.1):
         super().__init__()
@@ -41,46 +51,47 @@ class PositionalEncoding(nn.Module):
 
 class ViWordEmbedder(nn.Module):
     def __init__(self, config, vocab: Vocab):
-        self.embed_dim = vocab.embedder.embed_dim
-        self.model_type = config.model_type
+        super().__init__()
+        self.embed_dim = config.embedder.embed_dim
+        self.model_type = config.embedder.model_type
         self.bidirectional = config.embedder.bidirectional
         self.dropout_prob = config.embedder.dropout
         self.num_layer = config.embedder.num_layer
-        self.device = config.device
+        self.device = config.model.device
         self.pad_idx = vocab.get_pad_idx
-        self.total_token_dict = vocab.total_token_dict
+        self.total_tokens_dict = vocab.total_tokens_dict
 
         self.embedding_onset = nn.Embedding(
-            num_embeddings=self.total_token_dict["onset"],
+            num_embeddings=self.total_tokens_dict["onset"],
             embedding_dim=self.embed_dim,
             padding_idx=self.pad_idx,
         )
         self.embedding_tone = nn.Embedding(
-            num_embeddings=vocab.total_token_dict["tone"],
+            num_embeddings=vocab.total_tokens_dict["tone"],
             embedding_dim=self.embed_dim,
             padding_idx=self.pad_idx,
         )
 
         self.embedding_nucleus = nn.Embedding(
-            num_embeddings=vocab.total_token_dict["nucleus"],
+            num_embeddings=vocab.total_tokens_dict["nucleus"],
             embedding_dim=self.embed_dim,
             padding_idx=self.pad_idx,
         )
         self.embedding_medial = nn.Embedding(
-            num_embeddings=vocab.total_token_dict["medial"],
+            num_embeddings=vocab.total_tokens_dict["medial"],
             embedding_dim=self.embed_dim,
             padding_idx=self.pad_idx,
         )
         self.embedding_coda = nn.Embedding(
-            num_embeddings=vocab.total_token_dict["coda"],
+            num_embeddings=vocab.total_tokens_dict["coda"],
             embedding_dim=self.embed_dim,
             padding_idx=self.pad_idx,
         )
 
         if self.model_type == "GRU":
             self.rnn = nn.GRU(
-                input_size=self.input_dim,
-                hidden_size=self.d_model,
+                input_size=self.embed_dim,
+                hidden_size=self.embed_dim,
                 num_layers=self.num_layer,
                 bidirectional=True if self.bidirectional == 2 else False,
                 batch_first=True,
@@ -88,8 +99,8 @@ class ViWordEmbedder(nn.Module):
             )
         elif self.model_type == "LSTM":
             self.rnn = nn.LSTM(
-                input_size=self.input_dim,
-                hidden_size=self.d_model,
+                input_size=self.embed_dim,
+                hidden_size=self.embed_dim,
                 num_layers=self.num_layer,
                 bidirectional=True if self.bidirectional == 2 else False,
                 batch_first=True,
@@ -108,8 +119,8 @@ class ViWordEmbedder(nn.Module):
 
         onset_embed = self.embedding_onset(onset)  # (bs, seq_len, d_model)
         medial_embed = self.embedding_medial(medial)
-        nuclues_embed = self.embedding_onset(nucleus)
-        coda_embed = self.embedding_onset(coda)
+        nuclues_embed = self.embedding_nucleus(nucleus)
+        coda_embed = self.embedding_coda(coda)
         tone_embed = self.embedding_tone(tone)
         # stack_embed.shape = (bs, seq_len, 5, d_model)
         stack_embed = torch.stack(
