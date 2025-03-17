@@ -1,33 +1,32 @@
 import torch
 import torch.nn as nn
 from vocabs.vocab import Vocab
+from .utils import ViWordEmbedder
 from builders.model_builder import META_ARCHITECTURE
 
+
 @META_ARCHITECTURE.register()
-class RNNmodel(nn.Module):
+class RNNmodel_ViPherV2(nn.Module):
     """
     RNN Model for text classification tasks.
     """
+
     def __init__(self, config, vocab: Vocab):
-        super(RNNmodel, self).__init__()
+        super(RNNmodel_ViPherV2, self).__init__()
         # Model configuration
-        self.device = config.device
-        self.input_dim = config.input_dim
-        self.d_model = config.d_model
-        self.num_layer = config.num_layer
-        self.dropout_prob = config.dropout
-        self.num_output = config.num_output
-        self.bidirectional = config.bidirectional
-        self.model_type = config.model_type
-        self.label_smoothing = config.label_smoothing
+        self.device = config.model.device
+        self.input_dim = config.model.input_dim
+        self.d_model = config.model.d_model
+        self.num_layer = config.model.num_layer
+        self.dropout_prob = config.model.dropout
+        self.num_output = config.model.num_output
+        self.bidirectional = config.model.bidirectional
+        self.model_type = config.model.model_type
+        self.label_smoothing = config.model.label_smoothing
 
         # Embedding layer
         self.pad_idx = vocab.get_pad_idx
-        self.embedding = nn.Embedding(
-            num_embeddings=vocab.total_tokens, 
-            embedding_dim=self.input_dim, 
-            padding_idx=self.pad_idx
-        )
+        self.embedding = ViWordEmbedder(config, vocab)
 
         # RNN layer
         if self.model_type == 'GRU':
@@ -35,8 +34,8 @@ class RNNmodel(nn.Module):
                 input_size=self.input_dim,
                 hidden_size=self.d_model,
                 num_layers=self.num_layer,
-                bidirectional= True if self.bidirectional==2 else False,
-                batch_first= True,
+                bidirectional=True if self.bidirectional == 2 else False,
+                batch_first=True,
                 dropout=self.dropout_prob if self.num_layer > 1 else 0,
             )
         if self.model_type == 'LSTM':
@@ -44,11 +43,10 @@ class RNNmodel(nn.Module):
                 input_size=self.input_dim,
                 hidden_size=self.d_model,
                 num_layers=self.num_layer,
-                bidirectional= True if self.bidirectional==2 else False,
-                batch_first= True,
+                bidirectional=True if self.bidirectional == 2 else False,
+                batch_first=True,
                 dropout=self.dropout_prob if self.num_layer > 1 else 0,
             )
-        
 
         # Dropout layer
         self.dropout = nn.Dropout(self.dropout_prob)
@@ -57,7 +55,8 @@ class RNNmodel(nn.Module):
         self.fc = nn.Linear(self.d_model * self.bidirectional, self.num_output)
 
         # Loss function
-        self.loss_fn = nn.CrossEntropyLoss(label_smoothing = self.label_smoothing)
+        self.loss_fn = nn.CrossEntropyLoss(
+            label_smoothing=self.label_smoothing)
 
     def forward(self, x, labels=None):
         """
@@ -79,14 +78,16 @@ class RNNmodel(nn.Module):
 
         # Forward pass
         if 'LSTM' in self.model_type:
-            _, (hn, _) = self.rnn(x, (h0, h0)) # hn: (num_layers * num_directions, batch_size, hidden_dim)
+            # hn: (num_layers * num_directions, batch_size, hidden_dim)
+            _, (hn, _) = self.rnn(x, (h0, h0))
         else:
-            _, hn = self.rnn(x, h0) 
+            _, hn = self.rnn(x, h0)
 
         # Extract the last hidden states from both directions
         idx = -self.bidirectional
         hn = hn[idx:]  # Shape: (2, batch_size, hidden_dim)
-        hn = hn.permute(1, 0, 2).reshape(batch_size, -1)  # Shape: (batch_size, 2 * hidden_dim)
+        # Shape: (batch_size, 2 * hidden_dim)
+        hn = hn.permute(1, 0, 2).reshape(batch_size, -1)
 
         # Dropout and fully connected layer
         out = self.dropout(hn)
@@ -110,7 +111,7 @@ class RNNmodel(nn.Module):
             Tensor: Initialized hidden state tensor.
         """
         return torch.zeros(
-            self.num_layer * self.bidirectional,  
+            self.num_layer * self.bidirectional,
             batch_size,
             self.d_model,
             device=self.device

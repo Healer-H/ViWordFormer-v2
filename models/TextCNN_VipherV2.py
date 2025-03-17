@@ -7,7 +7,7 @@ from .utils import ViWordEmbedder
 
 
 @META_ARCHITECTURE.register()
-class TextCNN_VipherV2(nn.Module):
+class TextCNN_ViPherV2(nn.Module):
     # TODO: can we inheritance from TextCNN_Vipher?
     def __init__(self, config, vocab: Vocab):
         super().__init__()
@@ -39,10 +39,12 @@ class TextCNN_VipherV2(nn.Module):
 
         # Others layer
         self.dropout = nn.Dropout(self.dropout)
-        self.fc = nn.Linear(len(self.filter_sizes) * self.n_filters, self.output_dim)
+        self.fc = nn.Linear(len(self.filter_sizes) *
+                            self.n_filters, self.output_dim)
 
         # Loss function
-        self.loss_fn = nn.CrossEntropyLoss(label_smoothing=self.label_smoothing)
+        self.loss_fn = nn.CrossEntropyLoss(
+            label_smoothing=self.label_smoothing)
 
     def forward(self, x, labels=None):
         # x shape: (batch size, sentence length)
@@ -58,7 +60,8 @@ class TextCNN_VipherV2(nn.Module):
         conved = [F.relu(conv(embedded)).squeeze(3) for conv in self.convs]
 
         # [(N, C, L),..] -> [(N, C, 1),..] -> [(N, C),..]
-        pooled = [F.max_pool1d(conv, conv.shape[2]).squeeze(2) for conv in conved]
+        pooled = [F.max_pool1d(conv, conv.shape[2]).squeeze(2)
+                  for conv in conved]
 
         # Concatenate pooled features
         # (N, n_filters * len(filter_sizes))

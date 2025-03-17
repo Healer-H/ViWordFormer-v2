@@ -14,7 +14,7 @@ from .viwordformer.viwordformer import ViWordFormer
 
 # from .CNN.CNN_model import CNN_Model
 
-from .RNN import RNNmodel
+from .RNN_ViPherV2 import RNNmodel_ViPherV2
 from .RNN_Sequence_labeling import RNNmodel_Seq_label
 from .RNN_ABSA import RNNmodel_ABSA
 from .RNN_ViPher import RNNmodel_ViPher
@@ -25,7 +25,7 @@ from .TextCNN import TextCNN
 from .TextCNN_Vipher import TextCNN_ViPher
 from .TextCNN_ABSA import TextCNN_ABSA
 from .TextCNN_Vipher_ABSA import TextCNN_ABSA_ViPher
-from .TextCNN_VipherV2 import TextCNN_VipherV2
+from .TextCNN_VipherV2 import TextCNN_ViPherV2
 
 from .Transformer import TransformerEncoder
 from .Transformer_Vipher import TransformerEncoder_ViPher
