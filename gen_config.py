@@ -228,6 +228,12 @@ class ConfigGenerator:
             "TextCNN": TextCNNConfig(),
         }
 
+        # Track batch size
+        if self.dataset_name == "UIT_ViCTSD":
+            self.batch_size = 32    
+        else:
+            self.batch_size = 64
+
         # Keep track of generated files
         self.generated_files = []
 
@@ -277,8 +283,8 @@ class ConfigGenerator:
                     "type": "",
                     "path": self.data_paths["test"],
                 },
-                "batch_size": 64,
-                "num_workers": 6,
+                "batch_size": self.batch_size,
+                "num_workers": 4,
             },
             "model": {},
             "training": {
@@ -480,22 +486,40 @@ class ConfigGenerator:
 
 if __name__ == "__main__":
 
-    # Initialize the config generator
-    # generator = ConfigGenerator(
-    #     dataset_name=UIT_VSFC_METADATA["name"],
-    #     task_metadata=UIT_VSFC_METADATA["task"],
-    #     vocab_size=UIT_VSFC_METADATA["vocab_size"],
-    #     vocab_size_v2=UIT_VSFC_METADATA["vocab_size_v2"],
-    #     data_paths=UIT_VSFC_METADATA["data_paths"],
-    # )
-    # generator = ConfigGenerator(
-    #     dataset_name=UIT_ViCTSD_METADATA["name"],
-    #     task_metadata=UIT_ViCTSD_METADATA["task"],
-    #     vocab_size=UIT_ViCTSD_METADATA["vocab_size"],
-    #     vocab_size_v2=UIT_ViCTSD_METADATA["vocab_size_v2"],
-    #     data_paths=UIT_ViCTSD_METADATA["data_paths"],
-    # )
-    generator = ConfigGenerator(
+    rnn_models = ["GRU", "BiGRU", "LSTM", "BiLSTM"]
+    transformer_models = ["Transformer"]
+    textcnn_models = ["TextCNN"]
+
+    # Initialize the UIT VSFC config generator
+    uit_vsfc_generator = ConfigGenerator(
+        dataset_name=UIT_VSFC_METADATA["name"],
+        task_metadata=UIT_VSFC_METADATA["task"],
+        vocab_size=UIT_VSFC_METADATA["vocab_size"],
+        vocab_size_v2=UIT_VSFC_METADATA["vocab_size_v2"],
+        data_paths=UIT_VSFC_METADATA["data_paths"],
+    )
+    uit_vsfc_generator.generate_configs(rnn_models)
+    uit_vsfc_generator.generate_configs(transformer_models)
+    uit_vsfc_generator.generate_configs(textcnn_models)
+    uit_vsfc_generator.generate_shell_scripts()
+    print(f"UIT VSFC: Generated {len(uit_vsfc_generator.generated_files)} config files")
+    
+    # Initialize the UIT ViCTSD config generator
+    uit_victsd_generator = ConfigGenerator(
+        dataset_name=UIT_ViCTSD_METADATA["name"],
+        task_metadata=UIT_ViCTSD_METADATA["task"],
+        vocab_size=UIT_ViCTSD_METADATA["vocab_size"],
+        vocab_size_v2=UIT_ViCTSD_METADATA["vocab_size_v2"],
+        data_paths=UIT_ViCTSD_METADATA["data_paths"],
+    )
+    uit_victsd_generator.generate_configs(rnn_models)
+    uit_victsd_generator.generate_configs(transformer_models)
+    uit_victsd_generator.generate_configs(textcnn_models)
+    uit_victsd_generator.generate_shell_scripts()
+    print(f"UIT ViCTSD: Generated {len(uit_victsd_generator.generated_files)} config files")
+    
+    # Initialize the UIT ViOCD config generator
+    uit_viocd_generator = ConfigGenerator(
         dataset_name=UIT_ViOCD_METADATA["name"],
         task_metadata=UIT_ViOCD_METADATA["task"],
         vocab_size=UIT_ViOCD_METADATA["vocab_size"],
@@ -503,20 +527,8 @@ if __name__ == "__main__":
         data_paths=UIT_ViOCD_METADATA["data_paths"],
     )
 
-    # Generate configs for different model types
-    rnn_models = ["GRU", "BiGRU", "LSTM", "BiLSTM"]
-    generator.generate_configs(rnn_models)
-
-    # Generate configs for Transformer
-    transformer_models = ["Transformer"]
-    generator.generate_configs(transformer_models)
-
-    # Generate configs for TextCNN
-    textcnn_models = ["TextCNN"]
-    generator.generate_configs(textcnn_models)
-
-    # Generate shell scripts
-    generator.generate_shell_scripts()
-
-    print(f"Generated {len(generator.generated_files)} config files")
-    print("Shell scripts created in scripts/ directory")
+    uit_viocd_generator.generate_configs(rnn_models)
+    uit_viocd_generator.generate_configs(transformer_models)
+    uit_viocd_generator.generate_configs(textcnn_models)
+    uit_viocd_generator.generate_shell_scripts()
+    print(f"UIT ViOCD: Generated {len(uit_viocd_generator.generated_files)} config files")
