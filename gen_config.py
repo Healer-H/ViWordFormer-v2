@@ -104,7 +104,7 @@ class EmbedderConfig:
     Configuration class for RNN models with specific embedder configurations
     """
 
-    def get_embedder_config(self) -> Dict[str, Any]:
+    def get_embedder_config(self, model) -> Dict[str, Any]:
         """
         Get embedder configuration for RNN models.
 
@@ -113,11 +113,11 @@ class EmbedderConfig:
         """
 
         return {
-            "bidirectional": 2,
+            "bidirectional": 1,
             "model_type": "GRU",
-            "num_layer": 3,
+            "num_layer": 1,
             "dropout": 0.3,
-            "embed_dim": 256,
+            "embed_dim": 512 if "transformer" in model.lower() else 256,
         }
 
 
@@ -354,7 +354,7 @@ class ConfigGenerator:
 
                         # Add embedder config if tokenizer is vipherv2
                         if tokenizer == "vipherv2":
-                            embedder_config = EmbedderConfig().get_embedder_config()
+                            embedder_config = EmbedderConfig().get_embedder_config(model_name)
                             config["embedder"] = embedder_config
 
                         # Write the config to file
