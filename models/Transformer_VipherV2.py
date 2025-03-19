@@ -22,7 +22,6 @@ class TransformerEncoder_ViPherV2(nn.Module):
         self.max_seq_len = config.model.max_seq_len
         self.pad_idx = vocab.get_pad_idx
         self.total_token_dict = vocab.total_tokens_dict
-        self.embedding = ViWordEmbedder(config, vocab)
 
         self.word_embbder = ViWordEmbedder(config, vocab)
 

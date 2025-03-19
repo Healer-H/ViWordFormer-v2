@@ -52,10 +52,17 @@ class ModelConfig:
         Returns:
             Modified configuration dictionary
         """
+
         if tokenizer == "vipher":
             config["model"]["architecture"] = f"{self.architecture}_ViPher"
+
         elif tokenizer == "vipherv2":
             config["model"]["architecture"] = f"{self.architecture}_ViPherV2"
+            config["embedder"] = EmbedderConfig().get_embedder_config(self.name)
+            if 'transformer' in self.name.lower():
+                config["model"]["d_model"] = config["embedder"]["embed_dim"] * config["embedder"]["bidirectional"]
+            else:
+                config["model"]["input_dim"] = config["embedder"]["embed_dim"] * config["embedder"]["bidirectional"]
         else:
             config["model"]["architecture"] = self.architecture
         return config
@@ -91,7 +98,7 @@ class RNNConfig(ModelConfig):
             "model_type": model_type,
             "bidirectional": bidirectional,
             "num_layer": 3,
-            "input_dim": 512,
+            "input_dim": 256,
             "d_model": 256,
             "dropout": 0.2,
             "label_smoothing": 0.1,
@@ -154,6 +161,7 @@ class TextCNNConfig(ModelConfig):
     """
     Configuration class for TextCNN models
     """
+    #TODO: remove model.input_dim in TextCNN model
 
     def __init__(self):
         """Initialize a TextCNN configuration."""
@@ -316,8 +324,6 @@ class ConfigGenerator:
                         print(f"Skipping unknown model: {model_name}")
                         continue
 
-                    model_config = self.model_configs[model_name]
-
                     # Create directory structure
                     base_path = (
                         f"{self.dataset_name}/{task_name}/s{schema}/{model_name}"
@@ -347,15 +353,6 @@ class ConfigGenerator:
                             base_path,
                         )
 
-                        if tokenizer == "vipher":
-                            config["vocab"]["vocab_size"] = self.vocab_size
-                        elif tokenizer == "vipherv2":
-                            config["vocab"]["vocab_size"] = self.vocab_size_v2
-
-                        # Add embedder config if tokenizer is vipherv2
-                        if tokenizer == "vipherv2":
-                            embedder_config = EmbedderConfig().get_embedder_config(model_name)
-                            config["embedder"] = embedder_config
 
                         # Write the config to file
                         with open(config_path, "w") as yaml_file:
@@ -405,7 +402,12 @@ class ConfigGenerator:
         config["vocab"]["text"] = task_metadata["text"]
         config["vocab"]["label"] = task_metadata["label"]
         config["vocab"]["schema"] = schema
-
+        if tokenizer == "vipher":
+            config["vocab"]["vocab_size"] = self.vocab_size
+        elif tokenizer == "vipherv2":
+            config["vocab"]["vocab_size"] = self.vocab_size_v2
+ 
+ 
         # Configure dataset settings
         config["dataset"]["train"]["type"] = task_metadata["name"]
         config["dataset"]["dev"]["type"] = task_metadata["name"]
@@ -415,12 +417,15 @@ class ConfigGenerator:
         model_dict = model_config.get_config().copy()
         model_dict = model_config.customize_for_tokenizer(
             {"model": model_dict}, tokenizer
-        )["model"]
-        model_dict["num_output"] = task_metadata["num_label"]
-        model_dict["name"] = self._get_model_name(
-            model_name, task_name, tokenizer, {"model": model_dict}
         )
-        config["model"] = model_dict
+        model_dict["model"]["num_output"] = task_metadata["num_label"]
+        model_dict["model"]["name"] = self._get_model_name(
+            model_name, task_name, tokenizer, {"model": model_dict["model"]}
+        )
+        config["model"] = model_dict["model"]
+        if "embedder" in model_dict:
+            config["embedder"] = model_dict["embedder"]
+                                            
 
         # Configure training settings
         config["training"]["checkpoint_path"] = checkpoint_path
