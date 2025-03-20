@@ -151,7 +151,7 @@ class TransformerConfig(ModelConfig):
             "d_model": 512,
             "dropout": 0.2,
             "label_smoothing": 0.1,
-            "max_seq_len": 512,
+            "max_seq_len": 1024,
             "device": "cuda",
             "mlp_scaler": 4,
         }
@@ -412,6 +412,11 @@ class ConfigGenerator:
         config["dataset"]["train"]["type"] = task_metadata["name"]
         config["dataset"]["dev"]["type"] = task_metadata["name"]
         config["dataset"]["test"]["type"] = task_metadata["name"]
+        if model_name == "TextCNN":
+            config["dataset"]["train"]["max_len"] = 256
+            config["dataset"]["dev"]["max_len"] = 256
+            config["dataset"]["test"]["max_len"] = 256
+            
 
         # Configure model settings
         model_dict = model_config.get_config().copy()
