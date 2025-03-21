@@ -95,21 +95,21 @@ class ViWordEmbedder(nn.Module):
         (bs, seq_len, 5)
         """
 
-        x = self.embedding(x)  # (bs, seq_len, 5, d_model)
-        x = F.gelu(x)
+        embedded = self.embedding(x)  # (bs, seq_len, 5, d_model)
+        embedded = F.gelu(embedded)
 
-        embedded = []
-        for ith in range(x.shape[1]):
-            if "LSTM" in self.model_type:
-                _, (hn, _) = self.rnn(x[:, ith])
-            else:
-                # hn: (num_layers * num_directions, batch_size * seq_len, d_model)
-                _, hn = self.rnn(x[:, ith])
-            
-            hn = hn[-1]
-            hn = F.gelu(hn)
-            embedded.append(hn.unsqueeze(1))
+        # turn the tensor into (bs*seq_len, 5, d_model)
+        bs, seq_len, dim_1, dim_2 = embedded.shape
+        embedded = embedded.reshape((-1, dim_1, dim_2))
 
-        embedded = torch.cat(embedded, dim=1)
+        if self.model_type == "LSTM":
+            _, (embedded, _) = self.rnn(embedded)
+        else:
+            _, embedded = self.rnn(embedded)
+        
+        embedded = embedded[-1]
+
+        # turn the tensor back to (bs, seq_len, d_model)
+        embedded = embedded.reshape((bs, seq_len, -1))
 
         return embedded
