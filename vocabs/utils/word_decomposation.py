@@ -235,12 +235,12 @@ def is_Vietnamese(word: str) -> tuple[bool, tuple]:
     return True, (onset, medial, nucleus, coda, tone)
 
 
-def split_non_vietnamese_word(word):
+def determine_non_Vietnamese_character(character):
     
     ONSET_SET = ["m", "b", "v",  "t",  "đ", "n", "x", "s", "l", "h", "r", "g", "d", "k", "q", "c",
                           "ph", "th", "nh", "tr", "ch", "kh", "gh", "gi", "ng", "ngh"]
       
-    decomposed_character = unicodedata.normalize('NFD', word)
+    decomposed_character = unicodedata.normalize('NFD', character)
 
     onset = ""
     if decomposed_character in ONSET_SET:

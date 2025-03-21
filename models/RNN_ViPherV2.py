@@ -25,7 +25,7 @@ class RNNmodel_ViPherV2(nn.Module):
         self.label_smoothing = config.model.label_smoothing
 
         # Embedding layer
-        self.pad_idx = vocab.get_pad_idx
+        self.pad_idx = vocab.pad_idx
         self.embedding = ViWordEmbedder(config, vocab)
 
         # RNN layer
@@ -72,22 +72,14 @@ class RNNmodel_ViPherV2(nn.Module):
         # Embedding
         x = self.embedding(x)  # Shape: (batch_size, seq_len, d_model)
 
-        # Initialize hidden state
-        batch_size = x.size(0)
-        h0 = self.init_hidden(batch_size)
-
         # Forward pass
         if 'LSTM' in self.model_type:
             # hn: (num_layers * num_directions, batch_size, hidden_dim)
-            _, (hn, _) = self.rnn(x, (h0, h0))
+            _, (hn, _) = self.rnn(x)
         else:
-            _, hn = self.rnn(x, h0)
-
-        # Extract the last hidden states from both directions
-        idx = -self.bidirectional
-        hn = hn[idx:]  # Shape: (2, batch_size, hidden_dim)
-        # Shape: (batch_size, 2 * hidden_dim)
-        hn = hn.permute(1, 0, 2).reshape(batch_size, -1)
+            _, hn = self.rnn(x)
+        _, bs, _ = hn.shape
+        hn = hn[-2:].permute(1, 2, 0).reshape(bs, -1)
 
         # Dropout and fully connected layer
         out = self.dropout(hn)
@@ -100,19 +92,3 @@ class RNNmodel_ViPherV2(nn.Module):
 
         return logits
 
-    def init_hidden(self, batch_size):
-        """
-        Initialize hidden state for the RNN.
-
-        Args:
-            batch_size (int): Batch size.
-
-        Returns:
-            Tensor: Initialized hidden state tensor.
-        """
-        return torch.zeros(
-            self.num_layer * self.bidirectional,
-            batch_size,
-            self.d_model,
-            device=self.device
-        )

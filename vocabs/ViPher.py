@@ -6,7 +6,7 @@ from typing import List
 from collections import Counter
 from builders.vocab_builder import META_VOCAB
 from .utils.utils import preprocess_sentence
-from .utils.word_decomposation import is_Vietnamese, split_non_vietnamese_word
+from .utils.word_decomposation import is_Vietnamese, determine_non_Vietnamese_character
 
 @META_VOCAB.register()
 class VipherTokenizer:

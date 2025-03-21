@@ -1,4 +1,5 @@
 import torch
+from torch.nn import functional as F
 import math
 from torch import nn
 from vocabs.vocab import Vocab
@@ -54,38 +55,20 @@ class ViWordEmbedder(nn.Module):
         super().__init__()
         self.embed_dim = config.embedder.embed_dim
         self.model_type = config.embedder.model_type
-        self.bidirectional = config.embedder.bidirectional
         self.dropout_prob = config.embedder.dropout
         self.num_layer = config.embedder.num_layer
         self.device = config.model.device
-        self.pad_idx = vocab.get_pad_idx
-        self.total_tokens_dict = vocab.total_tokens_dict
+        self.pad_idx = vocab.pad_idx
+        self.total_tokens = vocab.total_tokens
 
-        self.embedding_onset = nn.Embedding(
-            num_embeddings=self.total_tokens_dict["onset"],
+        self.embedding = nn.Embedding(
+            num_embeddings=self.total_tokens,
             embedding_dim=self.embed_dim,
             padding_idx=self.pad_idx,
         )
-        self.embedding_tone = nn.Embedding(
-            num_embeddings=vocab.total_tokens_dict["tone"],
-            embedding_dim=self.embed_dim,
-            padding_idx=self.pad_idx,
-        )
-
-        self.embedding_nucleus = nn.Embedding(
-            num_embeddings=vocab.total_tokens_dict["nucleus"],
-            embedding_dim=self.embed_dim,
-            padding_idx=self.pad_idx,
-        )
-        self.embedding_medial = nn.Embedding(
-            num_embeddings=vocab.total_tokens_dict["medial"],
-            embedding_dim=self.embed_dim,
-            padding_idx=self.pad_idx,
-        )
-        self.embedding_coda = nn.Embedding(
-            num_embeddings=vocab.total_tokens_dict["coda"],
-            embedding_dim=self.embed_dim,
-            padding_idx=self.pad_idx,
+        self.proj = nn.Linear(
+            in_features=self.embed_dim,
+            out_features=self.embed_dim
         )
 
         if self.model_type == "GRU":
@@ -93,7 +76,7 @@ class ViWordEmbedder(nn.Module):
                 input_size=self.embed_dim,
                 hidden_size=self.embed_dim,
                 num_layers=self.num_layer,
-                bidirectional=True if self.bidirectional == 2 else False,
+                bidirectional=False,
                 batch_first=True,
                 dropout=self.dropout_prob if self.num_layer > 1 else 0,
             )
@@ -102,7 +85,7 @@ class ViWordEmbedder(nn.Module):
                 input_size=self.embed_dim,
                 hidden_size=self.embed_dim,
                 num_layers=self.num_layer,
-                bidirectional=True if self.bidirectional == 2 else False,
+                bidirectional=False,
                 batch_first=True,
                 dropout=self.dropout_prob if self.num_layer > 1 else 0,
             )
@@ -111,50 +94,22 @@ class ViWordEmbedder(nn.Module):
         """
         (bs, seq_len, 5)
         """
-        onset = x[:, :, 0]
-        tone = x[:, :, 1]
-        medial = x[:, :, 2]
-        nucleus = x[:, :, 3]
-        coda = x[:, :, 4]
 
-        onset_embed = self.embedding_onset(onset)  # (bs, seq_len, d_model)
-        medial_embed = self.embedding_medial(medial)
-        nuclues_embed = self.embedding_nucleus(nucleus)
-        coda_embed = self.embedding_coda(coda)
-        tone_embed = self.embedding_tone(tone)
-        # stack_embed.shape = (bs, seq_len, 5, d_model)
-        stack_embed = torch.stack(
-            [onset_embed, medial_embed, nuclues_embed, coda_embed, tone_embed], dim=2
-        )
+        x = self.embedding(x)  # (bs, seq_len, 5, d_model)
+        x = F.gelu(x)
 
-        batch_size, seq_len = stack_embed.shape[:2]
+        embedded = []
+        for ith in range(x.shape[1]):
+            if "LSTM" in self.model_type:
+                _, (hn, _) = self.rnn(x[:, ith])
+            else:
+                # hn: (num_layers * num_directions, batch_size * seq_len, d_model)
+                _, hn = self.rnn(x[:, ith])
+            
+            hn = hn[-1]
+            hn = F.gelu(hn)
+            embedded.append(hn.unsqueeze(1))
 
-        # (bs * seq_len, 5, d_model)
-        stack_embed = stack_embed.reshape(
-            batch_size * seq_len, stack_embed.shape[2], stack_embed.shape[3]
-        )
+        embedded = torch.cat(embedded, dim=1)
 
-        h0 = torch.zeros(
-            self.num_layer * self.bidirectional,
-            batch_size * seq_len,
-            self.embed_dim,
-            device=self.device,
-        )
-
-        if "LSTM" in self.model_type:
-            _, (hn, _) = self.rnn(stack_embed, (h0, h0))
-        else:
-            _, hn = self.rnn(
-                stack_embed, h0
-            )  # hn: (num_layers * num_directions, batch_size * seq_len, d_model)
-
-        # Extract the last hidden states from both directions
-        idx = -self.bidirectional
-        hn = hn[idx:]  # Shape: (bidirectional, batch_size * seq_len, d_model)
-        hn = hn.permute(1, 0, 2).reshape(
-            batch_size, -1
-        )  # Shape: (batch_size * seq_len, bidirectional * d_model)
-
-        # (bs, seq_len, d_model)
-        hn = hn.reshape(batch_size, seq_len, -1)
-        return hn
+        return embedded

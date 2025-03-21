@@ -155,12 +155,10 @@ class TextClassification(BaseTask):
                 labels.append(label[0].cpu().item())
                 predictions.append(output[0].cpu().item())
 
-                sentence = self.vocab.decode_sentence(input_ids)
                 label = self.vocab.decode_label(label)[0]
                 prediction = self.vocab.decode_label(output)[0]
            
                 results.append({
-                    "sentence": sentence,
                     "label": label,
                     "prediction": prediction
                 })
@@ -171,19 +169,17 @@ class TextClassification(BaseTask):
         json.dump(scores, open(os.path.join(self.checkpoint_path, "scores.json"), "w+"), ensure_ascii=False, indent=4)
         json.dump(results, open(os.path.join(self.checkpoint_path, "predictions.json"), "w+", encoding="utf-8"), ensure_ascii=False, indent=4)
 
-
     def start(self):
         if os.path.isfile(os.path.join(self.checkpoint_path, "last_model.pth")):
             checkpoint = self.load_checkpoint(os.path.join(self.checkpoint_path, "last_model.pth"))
             best_score = checkpoint["best_score"]
-            # patience = checkpoint["patience"]
+            patience = checkpoint["patience"]
             self.epoch = checkpoint["epoch"] + 1
             self.optim.load_state_dict(checkpoint['optimizer'])
             self.scheduler.load_state_dict(checkpoint['scheduler'])
         else:
             best_score = .0
-            # patience = 0
-        patience = 0
+            patience = 0
 
         while True:
             self.train()
@@ -201,7 +197,6 @@ class TextClassification(BaseTask):
             else:
                 patience += 1
 
-            # switch_to_rl = False
             exit_train = False
 
             if patience == self.patience:
