@@ -40,7 +40,7 @@ class ModelConfig:
             "Subclasses must implement get_config method")
 
     def customize_for_tokenizer(
-        self, config: Dict[str, Any], tokenizer: str
+        self, config: Dict[str, Any], tokenizer: str, task_type: str = "text_classification"
     ) -> Dict[str, Any]:
         """
         Customize configuration based on tokenizer.
@@ -48,23 +48,29 @@ class ModelConfig:
         Args:
             config: Base configuration dictionary
             tokenizer: Name of the tokenizer
+            task_type: Type of task (text_classification or aspect_based)
 
         Returns:
             Modified configuration dictionary
         """
+        base_arch = self.architecture
+        if task_type == "aspect_based":
+            base_arch = f"{self.architecture}_ABSA"
 
         if tokenizer == "vipher":
-            config["model"]["architecture"] = f"{self.architecture}_ViPher"
-
+            config["model"]["architecture"] = f"{base_arch}_ViPher"
         elif tokenizer == "vipherv2":
-            config["model"]["architecture"] = f"{self.architecture}_ViPherV2"
-            config["embedder"] = EmbedderConfig().get_embedder_config(self.name)
+            config["model"]["architecture"] = f"{base_arch}_ViPherV2"
+            config["embedder"] = EmbedderConfig(
+            ).get_embedder_config(self.name)
             if 'transformer' in self.name.lower():
-                config["model"]["d_model"] = config["embedder"]["embed_dim"] * config["embedder"]["bidirectional"]
+                config["model"]["d_model"] = config["embedder"]["embed_dim"] * \
+                    config["embedder"]["bidirectional"]
             else:
-                config["model"]["input_dim"] = config["embedder"]["embed_dim"] * config["embedder"]["bidirectional"]
+                config["model"]["input_dim"] = config["embedder"]["embed_dim"] * \
+                    config["embedder"]["bidirectional"]
         else:
-            config["model"]["architecture"] = self.architecture
+            config["model"]["architecture"] = base_arch
         return config
 
 
@@ -161,7 +167,7 @@ class TextCNNConfig(ModelConfig):
     """
     Configuration class for TextCNN models
     """
-    #TODO: remove model.input_dim in TextCNN model
+    # TODO: remove model.input_dim in TextCNN model
 
     def __init__(self):
         """Initialize a TextCNN configuration."""
@@ -238,7 +244,7 @@ class ConfigGenerator:
 
         # Track batch size
         if self.dataset_name == "UIT_ViCTSD":
-            self.batch_size = 32    
+            self.batch_size = 32
         else:
             self.batch_size = 64
 
@@ -252,7 +258,7 @@ class ConfigGenerator:
         Returns:
             Dict containing the base configuration.
         """
-        return {
+        config = {
             "vocab": {
                 "type": "",
                 "model_prefix": "",
@@ -262,9 +268,9 @@ class ConfigGenerator:
                 "label": "",
                 "vocab_size": -1,
                 "path": {
-                    "train": self.data_paths["train"],
-                    "dev": self.data_paths["dev"],
-                    "test": self.data_paths["test"],
+                    "train": self.data_paths["train"] if "train" in self.data_paths else "",
+                    "dev": self.data_paths["dev"] if "dev" in self.data_paths else "",
+                    "test": self.data_paths["test"] if "test" in self.data_paths else "",
                 },
                 "unk_piece": "<unk>",
                 "bos_piece": "<s>",
@@ -281,15 +287,15 @@ class ConfigGenerator:
             "dataset": {
                 "train": {
                     "type": "",
-                    "path": self.data_paths["train"],
+                    "path": self.data_paths["train"] if "train" in self.data_paths else "",
                 },
                 "dev": {
                     "type": "",
-                    "path": self.data_paths["dev"],
+                    "path": self.data_paths["dev"] if "dev" in self.data_paths else "",
                 },
                 "test": {
                     "type": "",
-                    "path": self.data_paths["test"],
+                    "path": self.data_paths["test"] if "test" in self.data_paths else "",
                 },
                 "batch_size": self.batch_size,
                 "num_workers": 4,
@@ -298,13 +304,15 @@ class ConfigGenerator:
             "training": {
                 "checkpoint_path": "",
                 "seed": 42,
-                "learning_rate": 0.1,
+                "learning_rate": 0.01,
                 "warmup": 500,
                 "patience": 10,
                 "score": "f1",
             },
             "task": "TextClassification",
         }
+
+        return config
 
     def generate_configs(self, model_names: List[str]) -> List[str]:
         """
@@ -316,51 +324,59 @@ class ConfigGenerator:
         Returns:
             List of paths to generated config files
         """
-
-        for task_name, task_metadata in self.task_metadata.items():
-            for schema in self.schemas:
-                for model_name in model_names:
-                    if model_name not in self.model_configs:
-                        print(f"Skipping unknown model: {model_name}")
-                        continue
-
-                    # Create directory structure
-                    base_path = (
-                        f"{self.dataset_name}/{task_name}/s{schema}/{model_name}"
-                    )
-                    config_path_prefix = f"configs/{base_path}"
-                    os.makedirs(config_path_prefix, exist_ok=True)
-
-                    for tokenizer, tokenizer_class in self.tokenizers.items():
-                        # Skip vipher with schema 2
-                        if (
-                            tokenizer == "vipher" or tokenizer == "vipherv2"
-                        ) and schema == 2:
-                            continue
-
-                        config_name = f"config_{tokenizer}_{model_name}_{self.dataset_name}_{task_name}.yaml"
-                        config_path = os.path.join(
-                            config_path_prefix, config_name)
-
-                        # Generate the config
-                        config = self._generate_config(
-                            model_name,
-                            task_name,
-                            task_metadata,
-                            tokenizer,
-                            tokenizer_class,
-                            schema,
-                            base_path,
-                        )
-
-
-                        # Write the config to file
-                        with open(config_path, "w") as yaml_file:
-                            yaml.dump(config, yaml_file,
-                                      default_flow_style=False)
-                        self.generated_files.append(config_path)
+        # Handle special case for ABSA tasks with task-specific data paths
+        if hasattr(self, 'data_paths') and isinstance(self.data_paths, dict) and any(isinstance(v, dict) for v in self.data_paths.values()):
+            # This is a dataset with task-specific paths like UIT-ABSA
+            for task_name, task_metadata in self.task_metadata.items():
+                task_paths = self.data_paths.get(task_name, {})
+                if task_paths:
+                    self._generate_task_configs(
+                        task_name, task_metadata, model_names, task_paths)
+        else:
+            # Standard dataset with single set of paths
+            for task_name, task_metadata in self.task_metadata.items():
+                self._generate_task_configs(
+                    task_name, task_metadata, model_names)
 
         return self.generated_files
+
+    def _generate_task_configs(self, task_name, task_metadata, model_names, task_paths=None):
+        """Generate configs for a specific task"""
+        for schema in self.schemas:
+            for model_name in model_names:
+                if model_name not in self.model_configs:
+                    print(f"Skipping unknown model: {model_name}")
+                    continue
+
+                # Create directory structure
+                base_path = f"{self.dataset_name}/{task_name}/s{schema}/{model_name}"
+                config_path_prefix = f"configs/{base_path}"
+                os.makedirs(config_path_prefix, exist_ok=True)
+
+                for tokenizer, tokenizer_class in self.tokenizers.items():
+                    # Skip vipher with schema 2
+                    if (tokenizer == "vipher" or tokenizer == "vipherv2") and schema == 2:
+                        continue
+
+                    config_name = f"config_{tokenizer}_{model_name}_{self.dataset_name}_{task_name}.yaml"
+                    config_path = os.path.join(config_path_prefix, config_name)
+
+                    # Generate the config
+                    config = self._generate_config(
+                        model_name,
+                        task_name,
+                        task_metadata,
+                        tokenizer,
+                        tokenizer_class,
+                        schema,
+                        base_path,
+                        task_paths,
+                    )
+
+                    # Write the config to file
+                    with open(config_path, "w") as yaml_file:
+                        yaml.dump(config, yaml_file, default_flow_style=False)
+                    self.generated_files.append(config_path)
 
     def _generate_config(
         self,
@@ -371,6 +387,7 @@ class ConfigGenerator:
         tokenizer_class: str,
         schema: int,
         base_path: str,
+        task_paths=None,
     ) -> Dict[str, Any]:
         """
         Generate a specific configuration.
@@ -383,12 +400,14 @@ class ConfigGenerator:
             tokenizer_class: Class name for the tokenizer
             schema: Schema number
             base_path: Base path for the config
+            task_paths: Optional task-specific data paths
 
         Returns:
             Dict containing the configuration
         """
         config = self.get_base_config()
         model_config = self.model_configs[model_name]
+        task_type = task_metadata.get("task_type", "text_classification")
 
         # Configure checkpoint path
         checkpoint_path = f"checkpoints/{base_path}/{tokenizer}"
@@ -402,12 +421,36 @@ class ConfigGenerator:
         config["vocab"]["text"] = task_metadata["text"]
         config["vocab"]["label"] = task_metadata["label"]
         config["vocab"]["schema"] = schema
+
+        # Handle ABSA specific fields
+        if task_type == "aspect_based":
+            config["vocab"]["aspect"] = task_metadata["aspect"]
+            config["vocab"]["aspect_label"] = task_metadata["aspect_label"]
+            config["vocab"]["task_type"] = "aspect_based"
+            config["task"] = "AspectBasedClassification"
+
+        # Set vocab size based on tokenizer and task
         if tokenizer == "vipher":
-            config["vocab"]["vocab_size"] = self.vocab_size
+            if task_name == "Res_ABSA" and hasattr(self, "vocab_size_res"):
+                config["vocab"]["vocab_size"] = self.vocab_size_res
+            else:
+                config["vocab"]["vocab_size"] = self.vocab_size
         elif tokenizer == "vipherv2":
-            config["vocab"]["vocab_size"] = self.vocab_size_v2
- 
- 
+            if task_name == "Res_ABSA" and hasattr(self, "vocab_size_res_v2"):
+                config["vocab"]["vocab_size"] = self.vocab_size_res_v2
+            else:
+                config["vocab"]["vocab_size"] = self.vocab_size_v2
+
+        # Configure dataset paths if task-specific paths provided
+        if task_paths:
+            config["vocab"]["path"]["train"] = task_paths["train"]
+            config["vocab"]["path"]["dev"] = task_paths["dev"]
+            config["vocab"]["path"]["test"] = task_paths["test"]
+
+            config["dataset"]["train"]["path"] = task_paths["train"]
+            config["dataset"]["dev"]["path"] = task_paths["dev"]
+            config["dataset"]["test"]["path"] = task_paths["test"]
+
         # Configure dataset settings
         config["dataset"]["train"]["type"] = task_metadata["name"]
         config["dataset"]["dev"]["type"] = task_metadata["name"]
@@ -416,21 +459,25 @@ class ConfigGenerator:
             config["dataset"]["train"]["max_len"] = 256
             config["dataset"]["dev"]["max_len"] = 256
             config["dataset"]["test"]["max_len"] = 256
-            
 
         # Configure model settings
         model_dict = model_config.get_config().copy()
         model_dict = model_config.customize_for_tokenizer(
-            {"model": model_dict}, tokenizer
+            {"model": model_dict}, tokenizer, task_type
         )
         model_dict["model"]["num_output"] = task_metadata["num_label"]
+
+        # Add num_categories for ABSA models
+        if task_type == "aspect_based" and "num_categories" in task_metadata:
+            model_dict["model"]["num_categories"] = task_metadata["num_categories"]
+
         model_dict["model"]["name"] = self._get_model_name(
             model_name, task_name, tokenizer, {"model": model_dict["model"]}
         )
         config["model"] = model_dict["model"]
+
         if "embedder" in model_dict:
             config["embedder"] = model_dict["embedder"]
-                                            
 
         # Configure training settings
         config["training"]["checkpoint_path"] = checkpoint_path
@@ -512,8 +559,9 @@ if __name__ == "__main__":
     uit_vsfc_generator.generate_configs(transformer_models)
     uit_vsfc_generator.generate_configs(textcnn_models)
     uit_vsfc_generator.generate_shell_scripts()
-    print(f"UIT VSFC: Generated {len(uit_vsfc_generator.generated_files)} config files")
-    
+    print(
+        f"UIT VSFC: Generated {len(uit_vsfc_generator.generated_files)} config files")
+
     # Initialize the UIT ViCTSD config generator
     uit_victsd_generator = ConfigGenerator(
         dataset_name=UIT_ViCTSD_METADATA["name"],
@@ -526,8 +574,9 @@ if __name__ == "__main__":
     uit_victsd_generator.generate_configs(transformer_models)
     uit_victsd_generator.generate_configs(textcnn_models)
     uit_victsd_generator.generate_shell_scripts()
-    print(f"UIT ViCTSD: Generated {len(uit_victsd_generator.generated_files)} config files")
-    
+    print(
+        f"UIT ViCTSD: Generated {len(uit_victsd_generator.generated_files)} config files")
+
     # Initialize the UIT ViOCD config generator
     uit_viocd_generator = ConfigGenerator(
         dataset_name=UIT_ViOCD_METADATA["name"],
@@ -541,4 +590,53 @@ if __name__ == "__main__":
     uit_viocd_generator.generate_configs(transformer_models)
     uit_viocd_generator.generate_configs(textcnn_models)
     uit_viocd_generator.generate_shell_scripts()
-    print(f"UIT ViOCD: Generated {len(uit_viocd_generator.generated_files)} config files")
+    print(
+        f"UIT ViOCD: Generated {len(uit_viocd_generator.generated_files)} config files")
+
+    # Import new metadata
+    from metadata import UIT_VSFC_METADATA, UIT_ViCTSD_METADATA, UIT_ViOCD_METADATA, UIT_ABSA_METADATA, UIT_ViSFD_METADATA
+
+    # Initialize the UIT-ABSA config generator for Hotel
+    uit_absa_hotel_generator = ConfigGenerator(
+        dataset_name=UIT_ABSA_METADATA["name"],
+        task_metadata={"Hotel_ABSA": UIT_ABSA_METADATA["task"]["Hotel_ABSA"]},
+        vocab_size=UIT_ABSA_METADATA["vocab_size"],
+        vocab_size_v2=UIT_ABSA_METADATA["vocab_size_v2"],
+        data_paths=UIT_ABSA_METADATA["data_paths"],
+    )
+    uit_absa_hotel_generator.generate_configs(rnn_models)
+    uit_absa_hotel_generator.generate_configs(transformer_models)
+    uit_absa_hotel_generator.generate_configs(textcnn_models)
+    uit_absa_hotel_generator.generate_shell_scripts()
+    print(
+        f"UIT-ABSA Hotel: Generated {len(uit_absa_hotel_generator.generated_files)} config files")
+
+    # Initialize the UIT-ABSA config generator for Restaurant
+    uit_absa_res_generator = ConfigGenerator(
+        dataset_name=UIT_ABSA_METADATA["name"],
+        task_metadata={"Res_ABSA": UIT_ABSA_METADATA["task"]["Res_ABSA"]},
+        vocab_size=UIT_ABSA_METADATA["vocab_size_res"],
+        vocab_size_v2=UIT_ABSA_METADATA["vocab_size_res_v2"],
+        data_paths=UIT_ABSA_METADATA["data_paths"],
+    )
+    uit_absa_res_generator.generate_configs(rnn_models)
+    uit_absa_res_generator.generate_configs(transformer_models)
+    uit_absa_res_generator.generate_configs(textcnn_models)
+    uit_absa_res_generator.generate_shell_scripts()
+    print(
+        f"UIT-ABSA Restaurant: Generated {len(uit_absa_res_generator.generated_files)} config files")
+
+    # Initialize the UIT-ViSFD config generator
+    uit_visfd_generator = ConfigGenerator(
+        dataset_name=UIT_ViSFD_METADATA["name"],
+        task_metadata=UIT_ViSFD_METADATA["task"],
+        vocab_size=UIT_ViSFD_METADATA["vocab_size"],
+        vocab_size_v2=UIT_ViSFD_METADATA["vocab_size_v2"],
+        data_paths=UIT_ViSFD_METADATA["data_paths"],
+    )
+    uit_visfd_generator.generate_configs(rnn_models)
+    uit_visfd_generator.generate_configs(transformer_models)
+    uit_visfd_generator.generate_configs(textcnn_models)
+    uit_visfd_generator.generate_shell_scripts()
+    print(
+        f"UIT-ViSFD: Generated {len(uit_visfd_generator.generated_files)} config files")

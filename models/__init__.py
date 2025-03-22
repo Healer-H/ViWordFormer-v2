@@ -20,7 +20,7 @@ from .RNN_ABSA import RNNmodel_ABSA
 from .RNN_ViPher import RNNmodel_ViPher
 from .RNN_vipher_Sequence_labeling import RNNmodel_ViPher_Seq_labeling
 from .RNN_ViPher_ABSA import RNNmodel_ABSA_ViPher
-from .RNN_ViPherVer2_ABSA import RNNmodel_ABSA_ViPherV2
+from .RNN_ViPherV2_ABSA import RNNmodel_ABSA_ViPherV2
 
 from .TextCNN import TextCNN
 from .TextCNN_Vipher import TextCNN_ViPher
