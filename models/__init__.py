@@ -20,15 +20,18 @@ from .RNN_ABSA import RNNmodel_ABSA
 from .RNN_ViPher import RNNmodel_ViPher
 from .RNN_vipher_Sequence_labeling import RNNmodel_ViPher_Seq_labeling
 from .RNN_ViPher_ABSA import RNNmodel_ABSA_ViPher
+from .RNN_ViPherV2_ABSA import RNNmodel_ABSA_ViPherV2
 
 from .TextCNN import TextCNN
 from .TextCNN_Vipher import TextCNN_ViPher
 from .TextCNN_ABSA import TextCNN_ABSA
 from .TextCNN_Vipher_ABSA import TextCNN_ABSA_ViPher
 from .TextCNN_VipherV2 import TextCNN_ViPherV2
+from .TextCNN_VipherV2_ABSA import TextCNN_ABSA_ViPherV2
 
 from .Transformer import TransformerEncoder
 from .Transformer_Vipher import TransformerEncoder_ViPher
 from .Transformer_ABSA import TransformerEncoder_ABSA
 from .Transformer_Vipher_ABSA import TransformerEncoder_ABSA_ViPher
 from .Transformer_VipherV2 import TransformerEncoder_ViPherV2
+from .Transformer_VipherV2_ABSA import TransformerEncoder_ABSA_ViPherV2
