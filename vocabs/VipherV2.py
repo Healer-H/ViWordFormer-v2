@@ -178,8 +178,17 @@ class VipherTokenizerV2:
                     m_idx = self.stoi.get(medial_c, self.pad_idx)
                     n_idx = self.stoi.get(nucleus_c, self.pad_idx)
                     c_idx = self.stoi.get(coda_c, self.pad_idx)
-                    input_ids.append((o_idx, t_idx, m_idx, n_idx, c_idx))
-
+                    input_ids.append(
+                        (o_idx, t_idx, m_idx, n_idx, c_idx)
+                    )
+        if max_len is not None:
+            if len(input_ids) > max_len:
+                input_ids = input_ids[:max_len]
+                input_ids[-1] = self.eos_idx
+            elif len(input_ids) < max_len:
+                # pad with the pad triplet
+                input_ids += [(self.pad_idx, self.pad_idx, self.pad_idx, self.pad_idx, self.pad_idx)] * (max_len - len(input_ids))
+                
         return torch.tensor(input_ids, dtype=torch.long)
 
     def encode_label(self, label: str) -> torch.Tensor:
