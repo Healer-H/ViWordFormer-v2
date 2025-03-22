@@ -20,8 +20,7 @@ class TransformerEncoder_ViPherV2(nn.Module):
         self.num_output = config.model.num_output
         self.label_smoothing = config.model.label_smoothing
         self.max_seq_len = config.model.max_seq_len
-        self.pad_idx = vocab.get_pad_idx
-        self.total_token_dict = vocab.total_tokens_dict
+        self.pad_idx = vocab.pad_idx
 
         self.word_embbder = ViWordEmbedder(config, vocab)
 

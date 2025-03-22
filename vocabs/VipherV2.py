@@ -7,6 +7,7 @@ from .utils.utils import preprocess_sentence
 from .utils.word_decomposation import is_Vietnamese, determine_non_Vietnamese_character
 from typing import *
 
+
 @META_VOCAB.register()
 class VipherTokenizerV2:
     def __init__(self, config):
@@ -107,12 +108,8 @@ class VipherTokenizerV2:
         # Build itos/stoi for onset, tone, rhyme
         # Prepend the specials at the start
         counter = list(counter)
-        self.itos = {
-            i: tok for i, tok in enumerate(self.specials + counter)
-        }
-        self.stoi = {
-            tok: i for i, tok in enumerate(self.specials + counter)
-        }
+        self.itos = {i: tok for i, tok in enumerate(self.specials + counter)}
+        self.stoi = {tok: i for i, tok in enumerate(self.specials + counter)}
         self.pad_idx = self.stoi[self.pad_token]
 
         # Build label <-> index maps
@@ -139,7 +136,9 @@ class VipherTokenizerV2:
             self.i2l = {i: label for i, label in enumerate(labels)}
             self.l2i = {label: i for i, label in enumerate(labels)}
 
-    def encode_sentence(self, text: str, max_len: int = None) -> Tuple[List[int], List[int]]:
+    def encode_sentence(
+        self, text: str, max_len: int = None
+    ) -> Tuple[List[int], List[int]]:
         """
         Tokenize a sentence and return input IDs with a mapping from words to subwords.
 
@@ -179,9 +178,7 @@ class VipherTokenizerV2:
                     m_idx = self.stoi.get(medial_c, self.pad_idx)
                     n_idx = self.stoi.get(nucleus_c, self.pad_idx)
                     c_idx = self.stoi.get(coda_c, self.pad_idx)
-                    input_ids.append(
-                        (o_idx, t_idx, m_idx, n_idx, c_idx)
-                    )
+                    input_ids.append((o_idx, t_idx, m_idx, n_idx, c_idx))
 
         return torch.tensor(input_ids, dtype=torch.long)
 
@@ -274,7 +271,7 @@ class VipherTokenizerV2:
         """
         return len(self.l2i)
 
-    @property
-    def get_pad_idx(self) -> int:
-        """Get the ID of the padding token."""
-        return self.pad_idx[0]
+    # @property
+    # def get_pad_idx(self) -> int:
+    #     """Get the ID of the padding token."""
+    #     return self.pad_idx[0]
