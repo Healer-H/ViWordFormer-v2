@@ -201,12 +201,12 @@ class AspectBasedClassification(BaseTask):
                 labels.append(label.cpu().numpy())
                 predictions.append(output.cpu().numpy())
 
-                sentence = self.vocab.decode_sentence(input_ids)
+                # sentence = self.vocab.decode_sentence(input_ids)
                 label = self.vocab.decode_label(label)[0]
                 prediction = self.vocab.decode_label(output)[0]
 
                 results.append({
-                    "sentence": sentence,
+                    # "sentence": sentence,
                     "label": label,
                     "prediction": prediction
                 })
