@@ -304,7 +304,7 @@ class ConfigGenerator:
             "training": {
                 "checkpoint_path": "",
                 "seed": 42,
-                "learning_rate": 0.01,
+                "learning_rate": 0.1,
                 "warmup": 500,
                 "patience": 10,
                 "score": "f1",
