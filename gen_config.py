@@ -306,7 +306,7 @@ class ConfigGenerator:
                 "seed": 42,
                 "learning_rate": 0.1,
                 "warmup": 500,
-                "patience": 10,
+                "patience": 50,
                 "score": "f1",
             },
             "task": "TextClassification",
