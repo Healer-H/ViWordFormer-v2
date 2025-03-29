@@ -41,11 +41,27 @@ class VipherTokenizerV2:
         (onset_idx, tone_idx, medial_idx, nucleus_idx, coda_idx).
         """
         self.pad_token = config.pad_piece
+        self.bos_token = config.bos_piece
+        self.eos_token = config.eos_piece
+        self.unk_token = config.unk_piece
+        self.space_token = config.space_token
 
         # The base list of special tokens
         self.specials = [
-            self.pad_token,
+            self.pad_token,  # Index 0
+            self.bos_token,  # Index 1
+            self.eos_token,  # Index 2
+            self.unk_token,  # Index 3
+            self.space_token # Index 4
         ]
+
+        self.pad_idx = config.pad_id
+        self.bos_idx = config.bos_id
+        self.eos_idx = config.eos_id
+        self.unk_idx = config.unk_id
+        self.space_idx = config.space_id
+
+
 
     def _make_vocab(self, config):
         """
@@ -184,12 +200,13 @@ class VipherTokenizerV2:
         if max_len is not None:
             if len(input_ids) > max_len:
                 input_ids = input_ids[:max_len]
-                input_ids[-1] = self.eos_idx
+                input_ids[-1] = (self.eos_idx, self.eos_idx, self.eos_idx, self.eos_idx, self.eos_idx) 
             elif len(input_ids) < max_len:
                 # pad with the pad triplet
                 input_ids += [(self.pad_idx, self.pad_idx, self.pad_idx, self.pad_idx, self.pad_idx)] * (max_len - len(input_ids))
-                
-        return torch.tensor(input_ids, dtype=torch.long)
+
+        input_ids = torch.tensor(input_ids, dtype=torch.long)
+        return input_ids
 
     def encode_label(self, label: str) -> torch.Tensor:
         """

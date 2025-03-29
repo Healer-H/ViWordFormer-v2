@@ -7,4 +7,5 @@ a_temp
 .old
 scripts/
 
+*checkpoints/
 configs/

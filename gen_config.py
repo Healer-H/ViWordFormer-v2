@@ -304,7 +304,7 @@ class ConfigGenerator:
             "training": {
                 "checkpoint_path": "",
                 "seed": 42,
-                "learning_rate": 0.01,
+                "learning_rate": 0.08,
                 "warmup": 500,
                 "patience": 10,
                 "score": "f1",
@@ -431,16 +431,13 @@ class ConfigGenerator:
 
         # Set vocab size based on tokenizer and task
         if tokenizer == "vipher":
-            if task_name == "Res_ABSA" and hasattr(self, "vocab_size_res"):
-                config["vocab"]["vocab_size"] = self.vocab_size_res
-            else:
-                config["vocab"]["vocab_size"] = self.vocab_size
+            config["vocab"]["vocab_size"] = self.vocab_size
         elif tokenizer == "vipherv2":
-            if task_name == "Res_ABSA" and hasattr(self, "vocab_size_res_v2"):
-                config["vocab"]["vocab_size"] = self.vocab_size_res_v2
-            else:
-                config["vocab"]["vocab_size"] = self.vocab_size_v2
-
+            config["vocab"]["vocab_size"] = self.vocab_size_v2
+            if task_name == "Hotel_ABSA": # except handle for Hotel_ABSA
+                config["dataset"]["train"]["max_len"] = 128
+                config["dataset"]["dev"]["max_len"] = 128
+                config["dataset"]["test"]["max_len"] = 128
         # Configure dataset paths if task-specific paths provided
         if task_paths:
             config["vocab"]["path"]["train"] = task_paths["train"]
