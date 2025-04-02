@@ -30,7 +30,7 @@ class UIT_ViOCD_Dataset_Domain(Dataset):
         sentence = item["review"]
         label = item["domain"]
 
-        encoded_sentence = self._vocab.encode_sentence(sentence, self._max_len)
+        encoded_sentence = self._vocab.encode_sentence(sentence)
         encoded_label = self._vocab.encode_label(label)
 
         return Instance(
@@ -63,7 +63,7 @@ class UIT_ViOCD_Dataset_Label(Dataset):
         sentence = item["review"]
         label = item["label"]
 
-        encoded_sentence = self._vocab.encode_sentence(sentence, self._max_len)
+        encoded_sentence = self._vocab.encode_sentence(sentence)
         encoded_label = self._vocab.encode_label(label)
 
         return Instance(

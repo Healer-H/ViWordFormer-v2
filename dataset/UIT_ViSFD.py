@@ -30,7 +30,7 @@ class UIT_ViSFD_Dataset_ABSA(Dataset):
         sentence = item["comment"]
         label = item["label"]
 
-        encoded_sentence = self._vocab.encode_sentence(sentence, self._max_len)
+        encoded_sentence = self._vocab.encode_sentence(sentence)
         encoded_label = self._vocab.encode_label(label)
 
         return Instance(

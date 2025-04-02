@@ -7,7 +7,6 @@ from .utils.utils import preprocess_sentence
 from .utils.word_decomposation import is_Vietnamese, determine_non_Vietnamese_character
 from typing import *
 
-
 @META_VOCAB.register()
 class VipherTokenizerV2:
     def __init__(self, config):
@@ -41,27 +40,11 @@ class VipherTokenizerV2:
         (onset_idx, tone_idx, medial_idx, nucleus_idx, coda_idx).
         """
         self.pad_token = config.pad_piece
-        self.bos_token = config.bos_piece
-        self.eos_token = config.eos_piece
-        self.unk_token = config.unk_piece
-        self.space_token = config.space_token
 
         # The base list of special tokens
         self.specials = [
-            self.pad_token,  # Index 0
-            self.bos_token,  # Index 1
-            self.eos_token,  # Index 2
-            self.unk_token,  # Index 3
-            self.space_token # Index 4
+            self.pad_token,
         ]
-
-        self.pad_idx = config.pad_id
-        self.bos_idx = config.bos_id
-        self.eos_idx = config.eos_id
-        self.unk_idx = config.unk_id
-        self.space_idx = config.space_id
-
-
 
     def _make_vocab(self, config):
         """
@@ -124,8 +107,12 @@ class VipherTokenizerV2:
         # Build itos/stoi for onset, tone, rhyme
         # Prepend the specials at the start
         counter = list(counter)
-        self.itos = {i: tok for i, tok in enumerate(self.specials + counter)}
-        self.stoi = {tok: i for i, tok in enumerate(self.specials + counter)}
+        self.itos = {
+            i: tok for i, tok in enumerate(self.specials + counter)
+        }
+        self.stoi = {
+            tok: i for i, tok in enumerate(self.specials + counter)
+        }
         self.pad_idx = self.stoi[self.pad_token]
 
         # Build label <-> index maps
@@ -152,9 +139,7 @@ class VipherTokenizerV2:
             self.i2l = {i: label for i, label in enumerate(labels)}
             self.l2i = {label: i for i, label in enumerate(labels)}
 
-    def encode_sentence(
-        self, text: str, max_len: int = None
-    ) -> Tuple[List[int], List[int]]:
+    def encode_sentence(self, text: str) -> Tuple[List[int], List[int]]:
         """
         Tokenize a sentence and return input IDs with a mapping from words to subwords.
 
@@ -197,16 +182,8 @@ class VipherTokenizerV2:
                     input_ids.append(
                         (o_idx, t_idx, m_idx, n_idx, c_idx)
                     )
-        if max_len is not None:
-            if len(input_ids) > max_len:
-                input_ids = input_ids[:max_len]
-                input_ids[-1] = (self.eos_idx, self.eos_idx, self.eos_idx, self.eos_idx, self.eos_idx) 
-            elif len(input_ids) < max_len:
-                # pad with the pad triplet
-                input_ids += [(self.pad_idx, self.pad_idx, self.pad_idx, self.pad_idx, self.pad_idx)] * (max_len - len(input_ids))
 
-        input_ids = torch.tensor(input_ids, dtype=torch.long)
-        return input_ids
+        return torch.tensor(input_ids, dtype=torch.long)
 
     def encode_label(self, label: str) -> torch.Tensor:
         """
@@ -297,7 +274,7 @@ class VipherTokenizerV2:
         """
         return len(self.l2i)
 
-    # @property
-    # def get_pad_idx(self) -> int:
-    #     """Get the ID of the padding token."""
-    #     return self.pad_idx[0]
+    @property
+    def get_pad_idx(self) -> int:
+        """Get the ID of the padding token."""
+        return self.pad_idx[0]

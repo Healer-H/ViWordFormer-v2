@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.amp import autocast
+
 from vocabs.vocab import Vocab
 from builders.model_builder import META_ARCHITECTURE
 from .utils import ViWordEmbedder
@@ -57,7 +59,7 @@ class TextCNN_ViPherV2(nn.Module):
         conved = [F.relu(conv(embedded)).squeeze(3) for conv in self.convs]
 
         # [(N, C, L),..] -> [(N, C, 1),..] -> [(N, C),..]
-        pooled = [F.max_pool1d(conv, conv.shape[2]).squeeze(2) for conv in conved]
+        pooled = [F.avg_pool1d(conv, conv.shape[2]).squeeze(2) for conv in conved]
 
         # Concatenate pooled features
         # (N, n_filters * len(filter_sizes))
@@ -65,7 +67,8 @@ class TextCNN_ViPherV2(nn.Module):
         logits = self.fc(cat)
 
         if labels is not None:
-            loss = self.loss_fn(logits, labels.squeeze(-1))
+            with autocast("cuda"):
+                loss = self.loss_fn(logits, labels.squeeze(-1))
             return logits, loss
 
         return logits

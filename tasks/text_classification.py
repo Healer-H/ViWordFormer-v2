@@ -1,15 +1,19 @@
 from torch import Tensor
 from torch.utils.data import DataLoader
+from torch.amp import GradScaler
+
 import os
 from shutil import copyfile
 from tqdm import tqdm
 import json
+
 from builders.task_builder import META_TASK
 from builders.dataset_builder import build_dataset
 from tasks.base_task import BaseTask
 from dataset import collate_fn
 from evaluation import F1, Precision, Recall
 
+scaler = GradScaler()
 
 @META_TASK.register()
 class TextClassification(BaseTask):
@@ -89,7 +93,7 @@ class TextClassification(BaseTask):
 
                 # backward pass
                 self.optim.zero_grad()
-                loss.backward()
+                scaler.scale(loss).backward()
                 self.optim.step()
                 running_loss += loss.item()
 

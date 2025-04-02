@@ -29,7 +29,7 @@ class UIT_ABSA_Dataset_ABSA(Dataset):
         sentence = item["sentence"]
         label = item["label"]
 
-        encoded_sentence = self._vocab.encode_sentence(sentence, self._max_len)
+        encoded_sentence = self._vocab.encode_sentence(sentence)
         encoded_label = self._vocab.encode_label(label)
 
         return Instance(input_ids=encoded_sentence, label=encoded_label)

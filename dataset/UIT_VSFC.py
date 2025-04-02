@@ -32,7 +32,7 @@ class UIT_VSFC_Dataset_Topic(Dataset):
         
         label = item["topic"]
 
-        encoded_sentence = self._vocab.encode_sentence(sentence, self._max_len)
+        encoded_sentence = self._vocab.encode_sentence(sentence)
         encoded_label = self._vocab.encode_label(label)
       
         return Instance(
@@ -51,7 +51,7 @@ class UIT_VSFC_Dataset_Sentiment(UIT_VSFC_Dataset_Topic):
         
         label = item["sentiment"]
 
-        encoded_sentence = self._vocab.encode_sentence(sentence, self._max_len)
+        encoded_sentence = self._vocab.encode_sentence(sentence)
         encoded_label = self._vocab.encode_label(label)
       
         return Instance(

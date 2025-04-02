@@ -30,7 +30,7 @@ class UIT_ViCTSD_Dataset_Toxic(Dataset):
         sentence = item["comment"]
         label = item["toxicity"]
 
-        encoded_sentence = self._vocab.encode_sentence(sentence, self._max_len)
+        encoded_sentence = self._vocab.encode_sentence(sentence)
         encoded_label = self._vocab.encode_label(label)
 
         return Instance(
@@ -62,7 +62,7 @@ class UIT_ViCTSD_Dataset_Construct(Dataset):
         sentence = item["comment"]
         label = item["constructiveness"]
 
-        encoded_sentence = self._vocab.encode_sentence(sentence, self._max_len)
+        encoded_sentence = self._vocab.encode_sentence(sentence)
         encoded_label = self._vocab.encode_label(label)
 
         return Instance(
