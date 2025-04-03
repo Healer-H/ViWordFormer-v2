@@ -32,4 +32,4 @@ class UIT_ABSA_Dataset_ABSA(Dataset):
         encoded_sentence = self._vocab.encode_sentence(sentence)
         encoded_label = self._vocab.encode_label(label)
 
-        return Instance(input_ids=encoded_sentence, label=encoded_label)
+        return Instance(input_ids=encoded_sentence, label=encoded_label, sentence=sentence)

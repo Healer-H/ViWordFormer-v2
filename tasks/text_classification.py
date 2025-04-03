@@ -151,9 +151,7 @@ class TextClassification(BaseTask):
                 "test_scores": test_scores
             }
         )
-        with tqdm(
-            desc="Epoch %d - Predicting" % self.epoch, unit="it", total=len(dataloader)
-        ) as pbar:
+        with tqdm(desc="Epoch %d - Predicting" % self.epoch, unit="it", total=len(dataloader)) as pbar:
             for items in dataloader:
                 items = items.to(self.device)
                 input_ids = items.input_ids

@@ -44,16 +44,12 @@ class InstanceList(OrderedDict):
             values = [instance.get(key) for instance in instance_list]
            
             v0 = values[0]
-                
-            
             if isinstance(v0, np.ndarray):
                 values = [torch.tensor(value) for value in values]
                 values = self.pad_values(values)
                 values = torch.cat(values, dim=0)
             if isinstance(v0, torch.Tensor):
-            
                 values = self.pad_values(values)
-                
                 values = torch.cat(values, dim=0)
             elif hasattr(type(v0), "cat"):
                 values = type(v0).cat(values)
