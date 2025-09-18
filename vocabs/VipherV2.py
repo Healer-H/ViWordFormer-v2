@@ -183,6 +183,9 @@ class VipherTokenizerV2:
                         (o_idx, t_idx, m_idx, n_idx, c_idx)
                     )
 
+        while len(input_ids) < 10:
+            input_ids.append((self.pad_idx, )*5)
+
         return torch.tensor(input_ids, dtype=torch.long)
 
     def encode_label(self, label: str) -> torch.Tensor:

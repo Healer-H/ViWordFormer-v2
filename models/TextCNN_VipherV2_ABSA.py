@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.amp import autocast
+
 from vocabs.vocab import Vocab
 from builders.model_builder import META_ARCHITECTURE
 from .utils import ViWordEmbedder
-
 
 class Aspect_Based_SA_Output(nn.Module): 
     def __init__(self, dropout , d_input, d_output, num_categories):
@@ -17,7 +18,6 @@ class Aspect_Based_SA_Output(nn.Module):
         """
         super(Aspect_Based_SA_Output, self).__init__()
         self.dense = nn.Linear(d_input , d_output *num_categories ,  bias=True)
-        # self.softmax = nn.Softmax(dim=-1) 
         self.norm = nn.LayerNorm(d_output, eps=1e-12)
         self.dropout = nn.Dropout(dropout)
         self.num_categories = num_categories
@@ -58,19 +58,21 @@ class TextCNN_ABSA_ViPherV2(nn.Module):
         self.embedding = ViWordEmbedder(config, vocab)
         # Convolutional layers
         self.convs = nn.ModuleList([
-            nn.Conv2d(in_channels=1,
-                      out_channels=self.n_filters,
-                      kernel_size=(fs, self.d_model))
-            for fs in self.filter_sizes
+            nn.Conv1d(in_channels=self.d_model,
+                      out_channels=self.d_model,
+                      kernel_size=filter_size)
+            for filter_size in self.filter_sizes
         ])
         
         # Others layer
         self.dropout = nn.Dropout(self.dropout)
         
-        self.cls_head = Aspect_Based_SA_Output(config.model.dropout  , len(self.filter_sizes) *
-                            self.n_filters , self.output_dim, self.num_categories )
-
-
+        self.cls_head = Aspect_Based_SA_Output(
+            config.model.dropout, 
+            self.d_model*3, 
+            self.output_dim, 
+            self.num_categories
+        )
 
         # Loss function
         self.loss_fn = nn.CrossEntropyLoss(
@@ -78,28 +80,23 @@ class TextCNN_ABSA_ViPherV2(nn.Module):
 
     def forward(self, x, labels=None):
         # x shape: (batch size, sentence length)
-        embedded = self.embedding(x)
 
-        # convert to shape: (batch size, 1, sentence length, embedding dim)
-        embedded = embedded.unsqueeze(1)
+        embedded = self.embedding(x) # (batch_size, seq_len, d_model)
+        embedded = embedded.permute(0, -1, 1) # (batch_size, d_model, seq_len)
 
-        # Convolutions and max-pooling-over-time
-        # after conv: (bs, n_filter, seq_len - filter_size + 1, 1) -squeeze(3)
-        # -> (bs, n_filter, seq_len - filter_size + 1) ~ (N, C, L)
-        conved = [F.relu(conv(embedded)).squeeze(3) for conv in self.convs]
+        # Convolutions and average-pooling-over-time
+        conved = [F.relu(conv(embedded)) for conv in self.convs]
 
         # [(N, C, L),..] -> [(N, C, 1),..] -> [(N, C),..]
-        pooled = [F.max_pool1d(conv, conv.shape[2]).squeeze(2)
-                  for conv in conved]
+        pooled = [F.max_pool1d(conv, conv.shape[2]).squeeze(-1) for conv in conved]
 
         # Concatenate pooled features
-        # (N, n_filters * len(filter_sizes))
         cat = self.dropout(torch.cat(pooled, dim=1))
-        
         logits = self.cls_head(cat)
 
         if labels is not None:
-            loss = self.loss_fn(logits.view(-1, self.output_dim), labels.view(-1))
+            with autocast("cuda"):
+                loss = self.loss_fn(logits.view(-1, self.output_dim), labels.view(-1))
             return logits, loss
 
         return logits

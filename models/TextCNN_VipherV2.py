@@ -29,18 +29,18 @@ class TextCNN_ViPherV2(nn.Module):
         # Convolutional layers
         self.convs = nn.ModuleList(
             [
-                nn.Conv2d(
-                    in_channels=1,
-                    out_channels=self.n_filters,
-                    kernel_size=(fs, self.d_model),
+                nn.Conv1d(
+                    in_channels=self.d_model,
+                    out_channels=self.d_model,
+                    kernel_size=filter_size,
                 )
-                for fs in self.filter_sizes
+                for filter_size in self.filter_sizes
             ]
         )
 
         # Others layer
         self.dropout = nn.Dropout(self.dropout)
-        self.fc = nn.Linear(len(self.filter_sizes) * self.n_filters, self.output_dim)
+        self.fc = nn.Linear(self.d_model*3, self.output_dim)
 
         # Loss function
         self.loss_fn = nn.CrossEntropyLoss(label_smoothing=self.label_smoothing)
@@ -48,21 +48,16 @@ class TextCNN_ViPherV2(nn.Module):
     def forward(self, x, labels=None):
         # x shape: (batch size, sentence length)
 
-        embedded = self.embedding(x)  # (batch_size, seq_len, d_model)
-
-        # convert to shape: (batch size, 1, sentence length, embedding dim)
-        embedded = embedded.unsqueeze(1)
+        embedded = self.embedding(x) # (batch_size, seq_len, d_model)
+        embedded = embedded.permute(0, -1, 1) # (batch_size, d_model, seq_len)
 
         # Convolutions and max-pooling-over-time
-        # after conv: (bs, n_filter, seq_len - filter_size + 1, 1) -squeeze(3)
-        # -> (bs, n_filter, seq_len - filter_size + 1) ~ (N, C, L)
-        conved = [F.relu(conv(embedded)).squeeze(3) for conv in self.convs]
+        conved = [F.relu(conv(embedded)) for conv in self.convs]
 
         # [(N, C, L),..] -> [(N, C, 1),..] -> [(N, C),..]
-        pooled = [F.avg_pool1d(conv, conv.shape[2]).squeeze(2) for conv in conved]
+        pooled = [F.max_pool1d(conv, conv.shape[2]).squeeze(-1) for conv in conved]
 
         # Concatenate pooled features
-        # (N, n_filters * len(filter_sizes))
         cat = self.dropout(torch.cat(pooled, dim=1))
         logits = self.fc(cat)
 
