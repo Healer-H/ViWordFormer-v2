@@ -7,15 +7,15 @@ META_DATA = {
     "task": {
         "Seq_labeling": {
             "name": "PhoNER",
-            "text": "words",
+            "text": "text",
             "label": "tags",
             "num_label": 11,
         }
     },
     "vocab_size": 230,
-    "train": "data/PhoNER/train_syllable.json",
-    "dev": "data/PhoNER/dev_syllable.json",
-    "test": "data/PhoNER/test_syllable.json",
+    "train": "data/PhoNER/syllable/train.json",
+    "dev": "data/PhoNER/syllable/dev.json",
+    "test": "data/PhoNER/syllable/test.json",
 }
 
 SCHEMAS = [1, 2]
@@ -87,7 +87,7 @@ def get_base_config():
             "d_model": 256,
             "dropout": 0.2,            
             "label_smoothing": 0.1,
-            "device": "cuda",
+            "device": "cuda"
         },
         "training": {
             "checkpoint_path": "", #"checkpoints/UIT_VFSC/Topic/BiGRU/wordpiece",

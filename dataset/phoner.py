@@ -35,7 +35,15 @@ class PhoNER(Dataset):
         encoded_sentence, word_to_subword_mapping = self._vocab.encode_sequence_labeling(sentence)
         mapped_label = self._vocab.align_labels_with_subwords(label, word_to_subword_mapping)
         encoded_label = self._vocab.encode_label(mapped_label)
-      
+
+        print(encoded_sentence)
+        print(encoded_label)
+        print("+"*10)
+
+        print(word_to_subword_mapping)
+        print(mapped_label)
+        raise
+
         return Instance(
             input_ids = encoded_sentence,
             label = encoded_label

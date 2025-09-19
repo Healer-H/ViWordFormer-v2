@@ -72,7 +72,8 @@ class BPETokenizer:
         for path in json_paths:
             with open(path, encoding='utf-8') as f:
                 data = json.load(f)
-            for item in data:
+            for id in data:
+                item = data[id]
              
                 if isinstance(item[config.text], list):
                     tokens = preprocess_sentence(" ".join(item[config.text]))
