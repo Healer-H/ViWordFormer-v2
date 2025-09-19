@@ -125,13 +125,11 @@ class VipherTokenizer:
                             self.nonvietnamese.append(token)
 
                         for char in token:
-                            onset_char, tone_char, rhyme_char = split_non_vietnamese_word(char)
+                            onset_char, _, _ , _, coda_char = determine_non_Vietnamese_character(char)
                             if onset_char not in self.specials:
                                 counter_onset.update([onset_char])
-                            if tone_char not in self.specials:
-                                counter_tone.update([tone_char])
-                            if rhyme_char not in self.specials:
-                                counter_rhyme.update([rhyme_char])
+                            if coda_char not in self.specials:
+                                counter_rhyme.update([coda_char])
 
 
                 if self.config.get("task_type", None) == "seq_labeling":
@@ -193,11 +191,7 @@ class VipherTokenizer:
             self.i2l = {i: label for i, label in enumerate(labels)}
             self.l2i = {label: i for i, label in enumerate(labels)}
         
-        
-        
-        
-        
-    def encode_sequence_labeling(self, text: str, max_len: int = None) -> (List[int], List[int]):
+    def encode_sequence_labeling(self, text: str, max_len: int = None):
         """
         Tokenize a sentence and return input IDs with a mapping from words to subwords.
 
@@ -243,7 +237,7 @@ class VipherTokenizer:
                 vec.append(self.space_idx)
                 input_ids.append(self.space_idx)
                 for char in word:
-                    onset_c, tone_c, rhyme_c = split_non_vietnamese_word(char)
+                    onset_c, _, _, tone_c, rhyme_c = determine_non_Vietnamese_character(char)
                     o_idx = self.stoi_onset.get(onset_c, self.unk_idx[0])
                     t_idx = self.stoi_tone.get(tone_c, self.unk_idx[1])
                     r_idx = self.stoi_rhyme.get(rhyme_c, self.unk_idx[2])
@@ -323,11 +317,10 @@ class VipherTokenizer:
                 # individually, then a closing "space" triplet
                 vec.append(self.space_idx)
                 for char in token:
-                    onset_c, tone_c, rhyme_c = split_non_vietnamese_word(char)
+                    onset_c, _, _, _, coda_c = determine_non_Vietnamese_character(char)
                     o_idx = self.stoi_onset.get(onset_c, self.unk_idx[0])
-                    t_idx = self.stoi_tone.get(tone_c, self.unk_idx[1])
-                    r_idx = self.stoi_rhyme.get(rhyme_c, self.unk_idx[2])
-                    vec.append((o_idx, t_idx, r_idx))
+                    r_idx = self.stoi_rhyme.get(coda_c, self.unk_idx[2])
+                    vec.append((o_idx, self.unk_idx, r_idx))
                 vec.append(self.space_idx)
 
         vec.append(self.eos_idx)
